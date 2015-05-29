@@ -56,7 +56,7 @@ No configuration is needed. Either Network Activate this or use it on a single s
 
 **LD+JSON**
 
-1. This will create a script in the footer and Google will try to use this to allow users to further search in your website *
+1. This will create a script in the footer and Google will try to use this to allow users to further search in your website
 
 = Caching =
 
