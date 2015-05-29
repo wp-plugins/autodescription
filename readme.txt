@@ -66,9 +66,11 @@ This plugin will not output anything if no object caching plugin is found and th
 This plugin will always output the meta data when the user isn't logged in. Because Google is never logged in, your SEO is always correct.
 
 **If you use object caching**
+
 The output will be stored for each page, if you've edited a page the meta will stay the same until the object cache expires. So be sure to clear your object cache if it's a drastic change.
 
 **Other notes**
+
 *This plugin fully supports Genesis themes, this plugin takes the SEO content under each post and the Genesis SEO configuration page into account.*
 *This plugin will work with any theme, however it will not look through Widgets for description. This means that one-page themes might leave an empty description.*
 
