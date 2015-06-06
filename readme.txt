@@ -71,18 +71,14 @@ The output will be stored for each page, if you've edited a page the meta will s
 
 **Other notes**
 
-*This plugin fully supports Genesis themes, this plugin takes the SEO content under each post and the Genesis SEO configuration page into account.*
-*This plugin will work with any theme, however it will not look through Widgets for description. This means that one-page themes might leave an empty description.*
+*This plugin fully supports Genesis themes, this plugin takes the Genesis SEO content under each post and page and the global Genesis SEO configuration page into account.*
+*This plugin will work with any theme, however it will not look through Widgets or shortcodes for description. This means that one-page themes or pages built with page builders might leave an empty description.*
 
 == Installation ==
 
 1. Install AutoDescription either via the WordPress.org plugin directory, or by uploading the files to your server.
 1. Either Network Activate this plugin or activate it on a single site.
 1. That's it! There is no configuration needed.
-
-== Frequently Asked Questions ==
-
-== Screenshots ==
 
 == Changelog ==
 
