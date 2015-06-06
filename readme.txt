@@ -1,7 +1,7 @@
 === AutoDescription ===
 Contributors: cybr
-Tags: seo, description, og, type, meta
-Requires at least: 4.2.0
+Tags: seo, description, og, type, meta, ogtype, multisite
+Requires at least: 3.6.0
 Tested up to: 4.2.2
 Stable tag: 4.2.2
 License: GPLv2 or later
@@ -56,7 +56,7 @@ No configuration is needed. Either Network Activate this or use it on a single s
 
 **LD+JSON**
 
-1. This will create a script in the footer and Google will try to use this to allow users to further search in your website
+1. This will create a script in the header and Google will try to use this to allow users to further search in your website from their search engine.
 
 = Caching =
 
@@ -85,6 +85,14 @@ The output will be stored for each page, if you've edited a page the meta will s
 == Screenshots ==
 
 == Changelog ==
+
+= 1.3.0 =
+* Added SEO plugin detection (mainly WordPress SEO by Yoast)
+* Moved LD+Json script to header, replaced json_encoding with esc_url on urls
+* Broadened CDN support
+* Broadened support for odd server configurations and older WP versions
+* Removed og:image if no header image is found
+* Cleaned up code
 
 = 1.2.0 =
 * Added language file, English and Dutch are now supported
