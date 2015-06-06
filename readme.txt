@@ -110,7 +110,7 @@ The output will be stored for each page, if you've edited a page the meta will s
 
 == Requirements ==
 
-WordPress 4.2.0 brings mb_strlen into the game, even if your server doesn't support it. But this plugin should be working **from at least 3.2.0** if your server supports mb_strlen.
+WordPress 4.2.0 brings mb_strlen into the game, even if your server doesn't support it. But this plugin should be working **from at least 3.6.0** if your server supports mb_strlen.
 
 == Upgrade Notice ==
 
