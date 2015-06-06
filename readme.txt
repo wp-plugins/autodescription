@@ -118,8 +118,6 @@ WordPress 4.2.0 brings mb_strlen into the game, even if your server doesn't supp
 
 == Upgrade Notice ==
 
-== Arbitrary section ==
-
 == Filters ==
 
 = Add any of these filters to your theme's functions.php or a plugin to change this plugin's output =
