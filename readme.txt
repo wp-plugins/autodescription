@@ -1,6 +1,6 @@
 === AutoDescription ===
-Contributors: cybr
-Tags: seo, description, og, type, meta, ogtype, multisite
+Contributors: Cybr
+Tags: seo, description, og, type, meta, ogtype, multisite, search, engine, optimization
 Requires at least: 3.6.0
 Tested up to: 4.2.2
 Stable tag: 4.2.2
