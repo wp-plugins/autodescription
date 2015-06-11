@@ -3,7 +3,7 @@
  * Plugin Name: AutoDescription
  * Plugin URI: https://wordpress.org/plugins/autodescription/
  * Description: Automatically adds a description if previously empty based upon content and adds Open Graph tags.
- * Version: 1.3.0
+ * Version: 2.0.0
  * Author: Sybre Waaijer
  * Author URI: https://cyberwire.nl/
  * License: GPLv2 or later
@@ -40,20 +40,27 @@
  *			: Broadened support for odd server configurations and older WP versions
  *			: Removed og:image if no header image is found
  *
- * 2.0.0+	: This update is so big it needs a new number
+ * 2.0.0	: This update is so big it needs a new number
  *			: Not so auto anymore
- * 				: Added meta boxes to each page and post for manual SEO (if not Genesis)
- *					: If these fields (or one of them) are left empty, 
- *				: Added global SEO settings (if not genesis)
- * 			: Added global define variable (via wp-config.php): define(IS_HMPNL, true);
- * 				: This variable removes the Genesis SEO settings and overwrites them with this plugin's.
- *				: The same settings are used as for Genesis, this means theme switching is even easier and no settings are lost.
+ * 				: Added meta boxes to each page and post for manual SEO
+ *					: Title
+ *					: Description
+ *					: Canonical URL
+ *					: Robots
+ *			: Settings merged with Genesis SEO, after a save (per post/page) they should become AutoDescription's options.
+ *			: Added canonical url tag with WPMUdev's Domain Mapping support
+ *			: Added nofollow, noindex, noarchive tags per page
+ *			: Added noodp and noydir on each page for better SEO consistency
  *
- * + coming soon
+ * 2.1.0+	: Added global & front-page SEO settings
+ *			: Give more reasons for this plugin to be standalone
+ *
+ * + Coming soon
  *
  * Big thanks to StudioPress for releasing their software under GPL-2.0+, saved me a LOT of work figuring out things.
+ * It also made my life easier :D Now I don't have to update my site's SEO meta (almost all my sites use Genesis)
  *
- * @todo: Check for empty instances from other SEO plugins and fill them in
+ * @todo: Check for empty instances from other SEO plugins and fill them in. i.e. extended SEO plugin validation.
  * 		: There should be a reason why they're empty. Add options.
  */
 
@@ -117,6 +124,16 @@ if ( !function_exists('mb_substr') ) {
 	}
 }
 
+/**
+ * Defined constants
+ *
+ * @since 2.0.0
+ */
+function hmpl_ad_constants() {
+	define( 'HMPL_AD_SEO_SETTINGS_FIELD', apply_filters( 'hmpl_ad_settings_field', 'hmpl-ad-seo-settings' ) );
+}
+add_action( 'init', 'hmpl_ad_constants');
+ 
 /**
  * Detect active plugin by constant, class or function existence.
  *
@@ -275,41 +292,68 @@ function hmpl_ad_generate_description($description = '') {
 	
 	//* Genesis only, checks if description is present
 	$theme_info = wp_get_theme()->get('Template');
-
-	if( $theme_info == 'genesis' ) {
-		if ( is_front_page() ) {
-			$description = genesis_get_seo_option( 'home_description' ) ? genesis_get_seo_option( 'home_description' ) : get_bloginfo( 'description' );
-		}
-		if ( is_singular() ) {
-			if ( genesis_get_custom_field( '_genesis_description' ) )
-				$description = genesis_get_custom_field( '_genesis_description' );
-		}
-		if ( is_category() ) {
-			$term = $wp_query->get_queried_object();
-			$description = ! empty( $term->meta['description'] ) ? $term->meta['description'] : '';
-		}
-		if ( is_tag() ) {
-			$term = $wp_query->get_queried_object();
-			$description = ! empty( $term->meta['description'] ) ? $term->meta['description'] : '';
-		}
-		if ( is_tax() ) {
-			$term = get_term_by( 'slug', get_query_var( 'term' ), get_query_var( 'taxonomy' ) );
-			$description = ! empty( $term->meta['description'] ) ? wp_kses_stripslashes( wp_kses_decode_entities( $term->meta['description'] ) ) : '';
-		}
-		if ( is_author() ) {
-			$user_description = get_the_author_meta( 'meta_description', (int) get_query_var( 'author' ) );
-			$description = $user_description ? $user_description : '';
-		}
-		if ( is_post_type_archive() && genesis_has_post_type_archive_support() ) {
-			$description = genesis_get_cpt_option( 'description' ) ? genesis_get_cpt_option( 'description' ) : '';
-		}
-	}
 	
-	//* Fetch WPSEO description
+	//* Fetch WPSEO description (this whole function isn't processed with WPSEO as of now, so this is useless)
 	if ( method_exists('WPSEO_Frontend', 'generate_metadesc') )
 		$description = WPSEO_Frontend::get_instance()->metadesc( false );
 	
-	//* No description found? Create own description based on content
+	if ( empty($description) ) {
+		$description = hmpl_ad_get_custom_field( '_genesis_description' ) ? hmpl_ad_get_custom_field( '_genesis_description' ) : '';
+		
+		if( $theme_info == 'genesis' ) {
+			if ( is_front_page() ) {	
+				//* @Todo create this option
+				//	$description = hmpl_ad_get_seo_option( 'home_description' ) ? hmpl_ad_get_seo_option( 'home_description' ) : get_bloginfo( 'description' );	
+				
+				//* Genesis fallback
+				//	if ( empty($description) )
+					$description = genesis_get_seo_option( 'home_description' ) ? genesis_get_seo_option( 'home_description' ) : '';
+			}
+			if ( is_singular() ) {
+				if ( hmpl_ad_get_custom_field( '_genesis_description' ) )					
+					$description = hmpl_ad_get_custom_field( '_genesis_description' ) ? hmpl_ad_get_custom_field( '_genesis_description' ) : '';
+				
+				//* Genesis fallback
+				if ( empty($description) ) 
+					$description = genesis_get_custom_field( '_genesis_description' );
+			}
+			if ( is_category() ) {
+				$term = $wp_query->get_queried_object();
+				$description = ! empty( $term->meta['description'] ) ? $term->meta['description'] : ''; // genesis only, for now
+			}
+			if ( is_tag() ) {
+				$term = $wp_query->get_queried_object();
+				$description = ! empty( $term->meta['description'] ) ? $term->meta['description'] : ''; // genesis only, for now
+			}
+			if ( is_tax() ) {
+				$term = get_term_by( 'slug', get_query_var( 'term' ), get_query_var( 'taxonomy' ) );
+				$description = ! empty( $term->meta['description'] ) ? wp_kses_stripslashes( wp_kses_decode_entities( $term->meta['description'] ) ) : ''; // genesis only, for now
+			}
+			if ( is_post_type_archive() && genesis_has_post_type_archive_support() ) {
+				$description = genesis_get_cpt_option( 'description' ) ? genesis_get_cpt_option( 'description' ) : ''; // genesis only, for now
+			}
+		}
+	}		
+	
+	//* Fetch author page description
+	if ( is_author() ) {
+		$user_description = get_the_author_meta( 'meta_description', (int) get_query_var( 'author' ) );
+		$description = $user_description ? $user_description : '';
+	}
+		
+	//* Generate static front-page description from option or 
+	//* @TODO: create the option
+	/*
+	if ( is_front_page() ) {
+		$description = hmpl_ad_get_seo_option( 'home_description' ) ? hmpl_ad_get_seo_option( 'home_description' ) : get_bloginfo( 'description' );
+	}
+	*/
+	
+	//* Fetch AutoDescription description if not found yet
+	if ( !is_string($description) || empty($description) )
+		$description = hmpl_ad_get_custom_field( '_genesis_description' ) ? hmpl_ad_get_custom_field( '_genesis_description' ) : '';
+	
+	//* Still description found? Create auto description based on content
 	// Cache this? Cache everything? D:
 	if ( !is_string($description) || empty($description) ) { //* HEAVY CODE (adds .5s processing time with 241k characters on 6-core 2.4GHz prefork)
 		global $post;
@@ -438,17 +482,27 @@ function hmpl_og_title($title = '') {
 	
 	global $post;
 	
-	if ( empty ($title) ) {	
-		$blogname = get_bloginfo('name');
+	if ( empty ($title) ) {
+		$title = hmpl_ad_get_custom_field( '_genesis_title' ) ? hmpl_ad_get_custom_field( '_genesis_title' ) : '';
+			
+		$theme_info = wp_get_theme()->get('Template');
+		if( $theme_info == 'genesis' ) {
+			if ( empty($title) )
+				$url = genesis_get_custom_field( '_genesis_title' ) ? genesis_get_custom_field( '_genesis_title' ) : '';
+		}
 		
-		if ( is_front_page() ) {
-			$tagline = get_bloginfo( 'description', 'raw');
+		if ( empty ($title) ) {	
+			$blogname = get_bloginfo('name');
 			
-			$title = sprintf( '%s - %s', $blogname, $tagline);
-		} else {
-			$posttitle = get_the_title($post);
-			
-			$title = $posttitle . ' - ' . $blogname;
+			if ( is_front_page() ) {
+				$tagline = get_bloginfo( 'description', 'raw');
+				
+				$title = sprintf( '%s - %s', $blogname, $tagline);
+			} else {
+				$posttitle = get_the_title($post);
+				
+				$title = $posttitle . ' - ' . $blogname;
+			}
 		}
 	}
 	
@@ -496,7 +550,7 @@ function hmpl_og_type($type = '') {
  * @uses hmpl_ad_has_json_ld_plugin()
  * 
  * @since 1.2.0
- * @output echo in header
+ * @output echo in header on front page
  */
 function hmpl_ld_json($render = '') {
 	
@@ -598,6 +652,219 @@ function hmpl_og_sitename($sitename = '') {
 }
 
 /**
+ * Adds canonical url to header
+ *
+ * @uses WPMUdev's domain mapping
+ *
+ * @param string output	the output
+ *
+ * @since 2.0.0
+ */
+function hmpl_canonical($url = '') {
+	global $wp;
+		
+	if ( empty($url) ) {				
+
+		$url = hmpl_ad_get_custom_field( '_genesis_canonical_uri' ) ? hmpl_ad_get_custom_field( '_genesis_canonical_uri' ) : '';
+		
+		$theme_info = wp_get_theme()->get('Template');
+		if( $theme_info == 'genesis' ) {
+			if ( empty($url) )
+				$url = genesis_get_custom_field( '_genesis_canonical_uri' ) ? genesis_get_custom_field( '_genesis_canonical_uri' ) : '';
+		}
+		
+		if ( empty ($url) ) {
+			//* Domain Mapping check
+			if ( is_plugin_active( 'domain-mapping/domain-mapping.php' ) ) {
+				global $wpdb,$blog_id;
+				
+				//* Check if the domain is mapped
+				// Uses object cache from W3TC Auto Pilot
+				$ismapped = wp_cache_get('wap_mapped_clear_' . $blog_id, 'domain_mapping' );
+				if ( false === $ismapped ) {
+					$ismapped = $wpdb->get_var( $wpdb->prepare( "SELECT domain FROM {$wpdb->base_prefix}domain_mapping WHERE blog_id = %d", $blog_id ) ); //string
+					wp_cache_set('wap_mapped_clear_' . $blog_id, $ismapped, 'domain_mapping', 3600 ); // 1 hour
+				}
+				
+				if ( !empty($ismapped) ) {
+					//* Mapped domain url
+					$mappeddomainpre = wp_cache_get('hmpl_mappeddomainpre_' . $blog_id, 'hmpl_mainblog' );
+					if ( false === $mappeddomainpre ) {
+						$mappeddomainpre = $wpdb->get_var($wpdb->prepare("SELECT domain FROM {$wpdb->base_prefix}domain_mapping WHERE blog_id = %d", $blog_id));
+						wp_cache_set('hmpl_mappeddomainpre_' . $blog_id, $mappeddomainpre, 'hmpl_mainblog', 14400 );
+					}
+					
+					if ( !empty($mappeddomainpre) ) {
+						$url = add_query_arg(array(), $wp->request, $mappeddomainpre);
+					}
+				}
+			}
+			
+			if ( empty($url) )
+				$url = home_url(add_query_arg(array(),$wp->request));
+		}
+	}
+		
+	$output = '<link rel="canonical" href="' . trailingslashit( esc_url($url) ) . '" />' . "\r\n";
+	
+	return $output;
+}
+/**
+ * Output the `index`, `follow`, `noodp`, `noydir`, `noarchive` robots meta code in the document `head`.
+ *
+ * @since 2.0.0
+ *
+ * @uses genesis_get_seo_option()   Get SEO setting value.
+ * @uses genesis_get_custom_field() Get custom field value.
+ *
+ * @global WP_Query $wp_query Query object.
+ *
+ * @return null Return early if blog is not public.
+ */
+function hmpl_ad_robots() {
+	//* If the blog is private, then following logic is unnecessary as WP will insert noindex and nofollow
+	if ( ! get_option( 'blog_public' ) )
+		return;
+	
+	//* Genesis only, checks if description is present
+	$theme_info = wp_get_theme()->get('Template');
+
+	if( $theme_info == 'genesis' ) {
+		global $wp_query;
+		
+		//* Defaults
+		$meta = array(
+			'noindex'   => '',
+			'nofollow'  => '',
+			'noarchive' => genesis_get_seo_option( 'noarchive' ) ? 'noarchive' : '',
+			'noodp'     => genesis_get_seo_option( 'noodp' ) ? 'noodp' : '',
+			'noydir'    => genesis_get_seo_option( 'noydir' ) ? 'noydir' : '',
+		);
+
+		//* Check home page SEO settings, set noindex, nofollow and noarchive
+		if ( is_front_page() ) {
+			$meta['noindex']   = genesis_get_seo_option( 'home_noindex' ) ? 'noindex' : $meta['noindex'];
+			$meta['nofollow']  = genesis_get_seo_option( 'home_nofollow' ) ? 'nofollow' : $meta['nofollow'];
+			$meta['noarchive'] = genesis_get_seo_option( 'home_noarchive' ) ? 'noarchive' : $meta['noarchive'];
+		}
+
+		if ( is_category() ) {
+			$term = $wp_query->get_queried_object();
+
+			$meta['noindex']   = $term->meta['noindex'] ? 'noindex' : $meta['noindex'];
+			$meta['nofollow']  = $term->meta['nofollow'] ? 'nofollow' : $meta['nofollow'];
+			$meta['noarchive'] = $term->meta['noarchive'] ? 'noarchive' : $meta['noarchive'];
+
+			$meta['noindex']   = genesis_get_seo_option( 'noindex_cat_archive' ) ? 'noindex' : $meta['noindex'];
+			$meta['noarchive'] = genesis_get_seo_option( 'noarchive_cat_archive' ) ? 'noarchive' : $meta['noarchive'];
+
+			//* noindex paged archives, if canonical archives is off
+			$paged = get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1;
+			$meta['noindex'] = $paged > 1 && ! genesis_get_seo_option( 'canonical_archives' ) ? 'noindex' : $meta['noindex'];
+		}
+
+		if ( is_tag() ) {
+			$term = $wp_query->get_queried_object();
+
+			$meta['noindex']   = $term->meta['noindex'] ? 'noindex' : $meta['noindex'];
+			$meta['nofollow']  = $term->meta['nofollow'] ? 'nofollow' : $meta['nofollow'];
+			$meta['noarchive'] = $term->meta['noarchive'] ? 'noarchive' : $meta['noarchive'];
+
+			$meta['noindex']   = genesis_get_seo_option( 'noindex_tag_archive' ) ? 'noindex' : $meta['noindex'];
+			$meta['noarchive'] = genesis_get_seo_option( 'noarchive_tag_archive' ) ? 'noarchive' : $meta['noarchive'];
+
+			//* noindex paged archives, if canonical archives is off
+			$paged = get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1;
+			$meta['noindex'] = $paged > 1 && ! genesis_get_seo_option( 'canonical_archives' ) ? 'noindex' : $meta['noindex'];
+		}
+
+		if ( is_tax() ) {
+			$term = get_term_by( 'slug', get_query_var( 'term' ), get_query_var( 'taxonomy' ) );
+
+			$meta['noindex']   = $term->meta['noindex'] ? 'noindex' : $meta['noindex'];
+			$meta['nofollow']  = $term->meta['nofollow'] ? 'nofollow' : $meta['nofollow'];
+			$meta['noarchive'] = $term->meta['noarchive'] ? 'noarchive' : $meta['noarchive'];
+
+			//* noindex paged archives, if canonical archives is off
+			$paged = get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1;
+			$meta['noindex'] = $paged > 1 && ! genesis_get_seo_option( 'canonical_archives' ) ? 'noindex' : $meta['noindex'];
+		}
+
+		if ( is_post_type_archive() && genesis_has_post_type_archive_support() ) {
+			$meta['noindex']   = genesis_get_cpt_option( 'noindex' ) ? 'noindex' : $meta['noindex'];
+			$meta['nofollow']  = genesis_get_cpt_option( 'nofollow' ) ? 'nofollow' : $meta['nofollow'];
+			$meta['noarchive'] = genesis_get_cpt_option( 'noarchive' ) ? 'noarchive' : $meta['noarchive'];
+
+			//* noindex paged archives, if canonical archives is off
+			$paged = get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1;
+			$meta['noindex'] = $paged > 1 && ! genesis_get_seo_option( 'canonical_archives' ) ? 'noindex' : $meta['noindex'];
+		}
+
+		if ( is_author() ) {
+			$meta['noindex']   = get_the_author_meta( 'noindex', (int) get_query_var( 'author' ) ) ? 'noindex' : $meta['noindex'];
+			$meta['nofollow']  = get_the_author_meta( 'nofollow', (int) get_query_var( 'author' ) ) ? 'nofollow' : $meta['nofollow'];
+			$meta['noarchive'] = get_the_author_meta( 'noarchive', (int) get_query_var( 'author' ) ) ? 'noarchive' : $meta['noarchive'];
+
+			$meta['noindex']   = genesis_get_seo_option( 'noindex_author_archive' ) ? 'noindex' : $meta['noindex'];
+			$meta['noarchive'] = genesis_get_seo_option( 'noarchive_author_archive' ) ? 'noarchive' : $meta['noarchive'];
+
+			//* noindex paged archives, if canonical archives is off
+			$paged = get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1;
+			$meta['noindex'] = $paged > 1 && ! genesis_get_seo_option( 'canonical_archives' ) ? 'noindex' : $meta['noindex'];
+		}
+
+		if ( is_date() ) {
+			$meta['noindex']   = genesis_get_seo_option( 'noindex_date_archive' ) ? 'noindex' : $meta['noindex'];
+			$meta['noarchive'] = genesis_get_seo_option( 'noarchive_date_archive' ) ? 'noarchive' : $meta['noarchive'];
+		}
+
+		if ( is_search() ) {
+			$meta['noindex']   = genesis_get_seo_option( 'noindex_search_archive' ) ? 'noindex' : $meta['noindex'];
+			$meta['noarchive'] = genesis_get_seo_option( 'noarchive_search_archive' ) ? 'noarchive' : $meta['noarchive'];
+		}
+
+		if ( is_singular() ) {			
+			
+			$meta['noindex']   = hmpl_ad_get_custom_field( '_genesis_noindex' ) ? 'noindex' : $meta['noindex'];
+			if ( empty($meta['noindex']) )
+				$meta['noindex']   = genesis_get_custom_field( '_genesis_noindex' ) ? 'noindex' : $meta['noindex'];
+			
+			$meta['nofollow']  = hmpl_ad_get_custom_field( '_genesis_nofollow' ) ? 'nofollow' : $meta['nofollow'];
+			if ( empty($meta['nofollow']) )
+				$meta['nofollow']  = genesis_get_custom_field( '_genesis_nofollow' ) ? 'nofollow' : $meta['nofollow'];
+			
+			$meta['noarchive'] = hmpl_ad_get_custom_field( '_genesis_noarchive' ) ? 'noarchive' : $meta['noarchive'];
+			if ( empty($meta['noarchive']) )	
+				$meta['noarchive'] = genesis_get_custom_field( '_genesis_noarchive' ) ? 'noarchive' : $meta['noarchive'];
+			
+		}
+	} else {
+		$meta = array(
+			'noindex'   => '',
+			'nofollow'  => '',
+			//* @Todo: create these
+			'noarchive' => hmpl_ad_get_seo_option( 'noarchive' ) ? 'noarchive' : '',
+			'noodp'     => true ? 'noodp' : 'noodp', // not optional atm
+		//	'noodp'     => hmpl_ad_get_seo_option( 'noodp' ) ? 'noodp' : 'noodp',
+			'noydir'    => true ? 'noydir' : 'noydir', // not optional atm
+		//	'noydir'    => hmpl_ad_get_seo_option( 'noydir' ) ? 'noydir' : 'noydir',
+		);
+		
+		$meta['noindex']   = hmpl_ad_get_custom_field( '_genesis_noindex' ) ? 'noindex' : $meta['noindex'];
+		$meta['nofollow']  = hmpl_ad_get_custom_field( '_genesis_nofollow' ) ? 'nofollow' : $meta['nofollow'];
+		$meta['noarchive'] = hmpl_ad_get_custom_field( '_genesis_noarchive' ) ? 'noarchive' : $meta['noarchive'];
+	}
+
+	//* Strip empty array items
+	$meta = array_filter( $meta );
+
+	//* Add meta if any exist
+	if ( $meta )
+		printf( '<meta name="robots" content="%s" />' . "\r\n", implode( ',', $meta ) );
+
+}
+
+/**
  * Output the header meta and script
  *
  * @since 1.0.0
@@ -613,6 +880,7 @@ function hmpl_og_sitename($sitename = '') {
  * @uses hmpl_og_url()
  * @uses hmpl_og_sitename()
  * @uses hmpl_ld_json()
+ * @uses hmpl_canonical()
  *
  * @output echo in header
  */
@@ -627,6 +895,10 @@ function add_hmpl_meta_tags() {
 	 */
 	//add_filter( 'woo_title', 'hmpl_og_title', 99 );
 	
+	//* Remove canonical header
+	remove_action( 'wp_head', 'rel_canonical', 11);
+	remove_action( 'wp_head','genesis_canonical', 5 );
+	
 	$output = wp_cache_get( 'hmpl_autodescription_output_' . $blog_id . '_' . $page_id );
 	if ( false === $output ) {
 			
@@ -639,12 +911,14 @@ function add_hmpl_meta_tags() {
 				. hmpl_og_url()
 				. hmpl_og_sitename()
 				. hmpl_ld_json()
+				. hmpl_canonical()
+				. hmpl_ad_robots()
 				;
 				
 		wp_cache_set( 'hmpl_autodescription_output_' . $blog_id . '_' . $page_id, $output );
 	}
 	
-	echo $output;	
+	echo $output;
 }
 
 /**
@@ -682,13 +956,17 @@ function hmpl_auto_description_run() {
 		} else {
 			$logged_in = false;
 		}
-	
+		
+		if( $theme_info == 'genesis' ) {
+			remove_action( 'genesis_meta', 'genesis_seo_meta_description', 10 );
+			remove_action( 'genesis_meta', 'genesis_robots_meta', 10 );
+		}
+		
 		if ( ! $logged_in ) {
 			//* Genesis only, checks if description is present
 			$theme_info = wp_get_theme()->get('Template');
 
 			if( $theme_info == 'genesis' ) {
-				remove_action( 'genesis_meta', 'genesis_seo_meta_description', 10 );
 				add_action( 'genesis_meta', 'add_hmpl_meta_tags', 10 );
 			} else {
 				add_action( 'wp_head', 'add_hmpl_meta_tags', 1 );
@@ -702,26 +980,303 @@ add_action( 'init', 'hmpl_auto_description_run', 10 );
 ----------------------------------------------------------------------------------------------------*/
 
 /**
- * Initiate the SEO meta boxes
+ * Removes the Genesis SEO meta box
  *
  * @since 2.0.0
  */
 function hmpl_auto_description_admin_run() {
+		
+	$theme_info = wp_get_theme()->get('Template');
 	
-	//* Don't show meta boxes if another SEO plugin is active
+	$ad_wpmu_load = apply_filters( 'hmpl_ad_load', '__return_true' );
+	
+	if ($ad_wpmu_load !== false) {
+		//* Replace Genesis meta boxes with AutoDescription
+		if( $theme_info == 'genesis' ) {
+			remove_action( 'admin_menu', 'genesis_add_inpost_seo_box', 10);
+		}
+	}
+
+}
+add_action( 'after_setup_theme', 'hmpl_auto_description_admin_run', 10);
+
+/**
+ * Return SEO options from the SEO options database.
+ *
+ * @since 2.0.0+
+ *
+ * @uses hmpl_ad_get_option() Return option from the options table and cache result.
+ * @uses HMPL_AD_SEO_SETTINGS_FIELD
+ *
+ * @param string  $key       Option name.
+ * @param boolean $use_cache Optional. Whether to use the cache value or not. Defaults to true.
+ *
+ * @return mixed The value of this $key in the database.
+ */
+function hmpl_ad_get_seo_option( $key, $use_cache = true ) {
+	return hmpl_ad_get_option( $key, HMPL_AD_SEO_SETTINGS_FIELD, $use_cache );
+}
+
+/**
+ * Return option from the options table and cache result.
+ *
+ * Applies `hmpl_ad_options` filters.
+ * Applies `genesis_options` filters.
+ * This filter retrieves the (previous) values from Genesis if exists.
+ *
+ * Values pulled from the database are cached on each request, so a second request for the same value won't cause a
+ * second DB interaction.
+ *
+ * @since 2.0.0
+ *
+ * @param string  $key        Option name.
+ * @param string  $setting    Optional. Settings field name. Eventually defaults to null if not passed as an argument.
+ * @param boolean $use_cache  Optional. Whether to use the cache value or not. Default is true.
+ *
+ * @return mixed The value of this $key in the database.
+ *
+ * @thanks StudioPress :)
+ */
+function hmpl_ad_get_option( $key, $setting = null, $use_cache = true ) {
+
+	//* If we need to bypass the cache
+	if ( ! $use_cache ) {
+		$options = get_option( $setting );
+
+		if ( ! is_array( $options ) || ! array_key_exists( $key, $options ) )
+			return '';
+
+		return is_array( $options[$key] ) ? stripslashes_deep( $options[$key] ) : stripslashes( wp_kses_decode_entities( $options[$key] ) );
+	}
+
+	//* Setup caches
+	static $settings_cache = array();
+	static $options_cache  = array();
+
+	//* Check options cache
+	if ( isset( $options_cache[$setting][$key] ) )
+		//* Option has been cached
+		return $options_cache[$setting][$key];
+
+	//* Check settings cache
+	if ( isset( $settings_cache[$setting] ) )
+		//* Setting has been cached
+		$options = apply_filters( 'hmpl_ad_options', $settings_cache[$setting], $setting );
+	else
+		//* Set value and cache setting
+		$options = $settings_cache[$setting] = apply_filters( 'hmpl_ad_options', get_option( $setting ), $setting );
+
+	//* Check for non-existent option
+	if ( ! is_array( $options ) || ! array_key_exists( $key, (array) $options ) )
+		//* Cache non-existent option
+		$options_cache[$setting][$key] = '';
+	else
+		//* Option has not been previously been cached, so cache now
+		$options_cache[$setting][$key] = is_array( $options[$key] ) ? stripslashes_deep( $options[$key] ) : stripslashes( wp_kses_decode_entities( $options[$key] ) );
+
+	return $options_cache[$setting][$key];
+}
+
+/**
+ * Render the SEO meta box
+ * 
+ * @filter hmpl_ad_seobox return false to disable the meta boxes
+ * @filter hmpl_ad_load return false to disable the meta boxes and output of this plugin
+ *
+ * @since 2.0.0
+ */
+function hmpl_ad_add_inpost_seo_box_init() {
 	if ( hmpl_ad_detect_seo_plugins() )
 		return;
 	
-	$theme_info = wp_get_theme()->get('Template');
+	$ad_wpmu_load = apply_filters( 'hmpl_ad_load', '__return_true' );	
+	$hmpl_ad_seobox = apply_filters( 'hmpl_ad_seobox', '__return_true' );
 	
-	//* Replace Genesis meta boxes with AutoDescription
-	if( $theme_info == 'genesis' ) {
-		remove_action( 'admin_menu', 'genesis_add_inpost_seo_box', 99 );
+	if ($hmpl_ad_seobox !== false || $ad_wpmu_load !== false)
+		add_action( 'add_meta_boxes', 'hmpl_ad_add_inpost_seo_box', 10 );
+}
+add_action( 'add_meta_boxes', 'hmpl_ad_add_inpost_seo_box_init', 9 );
+
+/**
+ * Adds SEO Meta boxes beneath every page/post edit screen
+ *
+ * High priority, this box is seen right below the post/page edit screen.
+ * 
+ * @since 2.0.0
+ * 
+ * @options Genesis : Merge these options with Genesis options. Prevents lost data.
+ */
+function hmpl_ad_add_inpost_seo_box() {	
+	
+	$post = array( get_post_types( array( 'public' => true ) ), 'post');
+	$page = array( get_post_types( array( 'public' => true ) ), 'page');
+	
+	//* Adds meta boxes on Posts
+	foreach ( $post as $type ) {
+		add_meta_box( 'hmpl_ad_inpost_seo_box', __( 'Post SEO Settings', 'AutoDescription' ), 'hmpl_ad_inpost_seo_box', $type, 'normal', 'high' );
 	}
-	add_action( 'admin_menu', 'hmpl_ad_add_inpost_seo_box' );
+	
+	//* Adds meta box on Pages
+	foreach ( $page as $type ) {
+		add_meta_box( 'hmpl_ad_inpost_seo_box', __( 'Page SEO Settings', 'AutoDescription' ), 'hmpl_ad_inpost_seo_box', $type, 'normal', 'high' );
+	}
+	
+	//* Print javascript in footer
+	if ( $post || $page ) {
+		add_action( 'admin_print_scripts', 'hmpl_ad_javascript', 11 );
+	}
 	
 }
-//add_action( 'admin_menu', 'hmpl_auto_description_admin_run', 99); // not working yet
+
+/**
+ * Javascript, adds counter to SEO title and description
+ *
+ * @since 2.0.0
+ *
+ * @used by hmpl_ad_add_inpost_seo_box
+ */
+function hmpl_ad_javascript() {
+	
+	//* The javascript, it's pretty minified like this.
+	$js = "jQuery(function ($) {"
+		.	"$('#autodescription_title, #autodescription_description').on('keyup', function(event){"
+		.		"$('#' + event.target.id + '_chars').html($(event.target).val().length.toString());"
+		. 	"});"
+		. "});"
+		;
+		
+	$output = "<script type='text/javascript'>" . $js . "</script>";
+	
+	echo $output;
+}
+
+/**
+ * Callback for in-post SEO meta box.
+ *
+ * @since 2.0.0
+ *
+ * @uses hmpl_ad_get_custom_field() Get custom field value.
+ * @uses _genesis_meta to pull data from Genesis themes.
+ *
+ */
+function hmpl_ad_inpost_seo_box() {
+	
+	wp_nonce_field( 'hmpl_ad_inpost_seo_save', 'hmpl_ad_inpost_seo_nonce' );
+		
+	?>
+
+	<p><label for="autodescription_title"><b><?php _e( 'Custom Document Title', 'AutoDescription' ); ?></b> <abbr title="&lt;title&gt; Tag">[?]</abbr> <span class="hide-if-no-js"><?php printf( __( 'Characters Used: %s', 'AutoDescription' ), '<span id="autodescription_title_chars">'. mb_strlen( hmpl_ad_get_custom_field( '_genesis_title' ) ) .'</span>' ); ?></span></label></p>
+	<p><input class="large-text" type="text" name="autodescription[_genesis_title]" id="autodescription_title" value="<?php echo esc_attr( hmpl_ad_get_custom_field( '_genesis_title' ) ); ?>" /></p>
+
+	<p><label for="autodescription_description"><b><?php _e( 'Custom Post/Page Meta Description', 'AutoDescription' ); ?></b> <abbr title="&lt;meta name=&quot;description&quot; /&gt;">[?]</abbr> <span class="hide-if-no-js"><?php printf( __( 'Characters Used: %s', 'AutoDescription' ), '<span id="autodescription_description_chars">'. mb_strlen( hmpl_ad_get_custom_field( '_genesis_description' ) ) .'</span>' ); ?></span></label></p>
+	<p><textarea class="widefat" name="autodescription[_genesis_description]" id="autodescription_description" rows="4" cols="4"><?php echo esc_textarea( hmpl_ad_get_custom_field( '_genesis_description' ) ); ?></textarea></p>
+
+	<p><label for="autodescription_canonical"><b><?php _e( 'Custom Canonical URL', 'AutoDescription' ); ?></b> <a href="http://www.mattcutts.com/blog/canonical-link-tag/" target="_blank" title="&lt;link rel=&quot;canonical&quot; /&gt;">[?]</a></label></p>
+	<p><input class="large-text" type="text" name="autodescription[_genesis_canonical_uri]" id="autodescription_canonical" value="<?php echo esc_url( hmpl_ad_get_custom_field( '_genesis_canonical_uri' ) ); ?>" /></p>
+
+	<br />
+
+	<p><b><?php _e( 'Robots Meta Settings', 'AutoDescription' ); ?></b></p>
+
+	<p>
+		<label for="autodescription_noindex"><input type="checkbox" name="autodescription[_genesis_noindex]" id="autodescription_noindex" value="1" <?php checked( hmpl_ad_get_custom_field( '_genesis_noindex' ) ); ?> />
+		<?php printf( __( 'Apply %s to this post/page', 'AutoDescription' ), hmpl_ad_code( 'noindex' ) ); ?> <a href="http://yoast.com/articles/robots-meta-tags/" target="_blank">[?]</a></label><br />
+
+		<label for="autodescription_nofollow"><input type="checkbox" name="autodescription[_genesis_nofollow]" id="autodescription_nofollow" value="1" <?php checked( hmpl_ad_get_custom_field( '_genesis_nofollow' ) ); ?> />
+		<?php printf( __( 'Apply %s to this post/page', 'AutoDescription' ), hmpl_ad_code( 'nofollow' ) ); ?> <a href="http://yoast.com/articles/robots-meta-tags/" target="_blank">[?]</a></label><br />
+
+		<label for="autodescription_noarchive"><input type="checkbox" name="autodescription[_genesis_noarchive]" id="autodescription_noarchive" value="1" <?php checked( hmpl_ad_get_custom_field( '_genesis_noarchive' ) ); ?> />
+		<?php printf( __( 'Apply %s to this post/page', 'AutoDescription' ), hmpl_ad_code( 'noarchive' ) ); ?> <a href="http://yoast.com/articles/robots-meta-tags/" target="_blank">[?]</a></label>
+	</p>
+	<?php
+
+}
+
+/**
+ * Mark up content with code tags.
+ *
+ * Escapes all HTML, so `<` gets changed to `&lt;` and displays correctly.
+ *
+ * @since 2.0.0
+ *
+ * @param  string $content Content to be wrapped in code tags.
+ *
+ * @return string Content wrapped in code tags.
+ */
+function hmpl_ad_code( $content ) {
+
+	return '<code>' . esc_html( $content ) . '</code>';
+
+}
+
+/**
+ * Return custom field post meta data.
+ *
+ * Return only the first value of custom field. Return false if field is blank or not set.
+ *
+ * @since 2.0.0
+ *
+ * @param string $field Custom field key.
+ *
+ * @return string|boolean Return value or false on failure.
+ * 
+ * @thanks StudioPress :)
+ */
+function hmpl_ad_get_custom_field( $field ) {
+
+	if ( null === get_the_ID() )
+		return '';
+
+	$custom_field = get_post_meta( get_the_ID(), $field, true );
+
+	if ( ! $custom_field )
+		return '';
+
+	//* Return custom field, slashes stripped, sanitized if string
+	return is_array( $custom_field ) ? stripslashes_deep( $custom_field ) : stripslashes( wp_kses_decode_entities( $custom_field ) );
+
+}
+
+/**
+ * Save the SEO settings when we save a post or page.
+ *
+ * Some values get sanitized, the rest are pulled from identically named subkeys in the $_POST['autodescription'] array.
+ *
+ * @since 2.0.0
+ *
+ * @uses hmpl_ad_save_custom_fields() Perform checks and saves post meta / custom field data to a post or page.
+ *
+ * @param integer  $post_id Post ID.
+ * @param stdClass $post    Post object.
+ *
+ * @return mixed Returns post id if permissions incorrect, null if doing autosave, ajax or future post, false if update
+ *               or delete failed, and true on success.
+ */
+function hmpl_ad_inpost_seo_save( $post_id, $post ) {
+
+	if ( ! isset( $_POST['autodescription'] ) )
+		return;
+
+	//* Merge user submitted options with fallback defaults
+	$data = wp_parse_args( $_POST['autodescription'], array(
+		'_genesis_title'         => '',
+		'_genesis_description'   => '',
+		'_genesis_canonical_uri' => '',
+		'_genesis_noindex'       => 0,
+		'_genesis_nofollow'      => 0,
+		'_genesis_noarchive'     => 0,
+	) );
+
+	//* Sanitize the title, description, and tags
+	foreach ( (array) $data as $key => $value ) {
+		if ( in_array( $key, array( '_genesis_title', '_genesis_description', '_genesis_keywords' ) ) )
+			$data[ $key ] = strip_tags( $value );
+	}
+
+	hmpl_ad_save_custom_fields( $data, 'hmpl_ad_inpost_seo_save', 'hmpl_ad_inpost_seo_nonce', $post );
+
+}
+add_action( 'save_post', 'hmpl_ad_inpost_seo_save', 1, 2 );
 
 /**
  * Save post meta / custom field data for a post or page.
@@ -739,7 +1294,6 @@ function hmpl_auto_description_admin_run() {
  * @param string   $nonce_action Nonce action for use with wp_verify_nonce().
  * @param string   $nonce_name   Name of the nonce to check for permissions.
  * @param WP_Post|integer $post  Post object or ID.
- * @param integer  $deprecated   Deprecated (formerly accepted a post ID).
  *
  * @return mixed Return null if permissions incorrect, doing autosave, ajax or future post, false if update or delete
  *               failed, and true on success.
@@ -779,164 +1333,5 @@ function hmpl_ad_save_custom_fields( array $data, $nonce_action, $nonce_name, $p
 		else
 			delete_post_meta( $post->ID, $field );
 	}
-
-}
-
-/**
- * Adds SEO Meta boxes beneath every page/post edit screen
- * 
- * @since 2.0.0
- * @dependable Genesis : If a Genesis theme is active, don't activate the meta boxes
- * 
- * @options Genesis : Merge these options with Genesis options, either/or.
- *
- * @thanks StudioPress :)
- */
-function hmpl_ad_add_inpost_seo_box() {
 	
-	//* @todo: check this
-	foreach ( (array) get_post_types( array( 'public' => true, /*'capability_type' => array() */ ) ) as $type ) {
-		if ( post_type_supports( $type ) ) {
-		//	if ( post_type_supports ( 'page' ) )
-				add_meta_box( 'hmpl_ad_inpost_seo_box', __( 'Page SEO Settings', 'AutoDescription' ), 'hmpl_ad_inpost_seo_box', $type, 'normal', 'high' );
-		//	if ( post_type_supports ( 'post' ) )
-		//		add_meta_box( 'hmpl_ad_inpost_seo_box', __( 'Post SEO Settings', 'AutoDescription' ), 'hmpl_ad_inpost_seo_box', $type, 'normal', 'high' );
-		}
-	}
-
 }
-
-/**
- * Mark up content with code tags.
- *
- * Escapes all HTML, so `<` gets changed to `&lt;` and displays correctly.
- *
- * Used almost exclusively within labels and text in user interfaces added by Genesis.
- *
- * @since 2.0.0
- *
- * @param  string $content Content to be wrapped in code tags.
- *
- * @return string Content wrapped in code tags.
- */
-function hmpl_ad_code( $content ) {
-
-	return '<code>' . esc_html( $content ) . '</code>';
-
-}
-
-/**
- * Callback for in-post SEO meta box.
- *
- * @since 2.0.0
- *
- * @uses hmpl_ad_get_custom_field() Get custom field value.
- */
-function hmpl_ad_inpost_seo_box() {
-
-	wp_nonce_field( 'genesis_inpost_seo_save', 'genesis_inpost_seo_nonce' );
-	?>
-
-	<p><label for="genesis_title"><b><?php _e( 'Custom Document Title', 'AutoDescription' ); ?></b> <abbr title="&lt;title&gt; Tag">[?]</abbr> <span class="hide-if-no-js"><?php printf( __( 'Characters Used: %s', 'AutoDescription' ), '<span id="genesis_title_chars">'. mb_strlen( hmpl_ad_get_custom_field( '_genesis_title' ) ) .'</span>' ); ?></span></label></p>
-	<p><input class="large-text" type="text" name="genesis_seo[_genesis_title]" id="genesis_title" value="<?php echo esc_attr( hmpl_ad_get_custom_field( '_genesis_title' ) ); ?>" /></p>
-
-	<p><label for="genesis_description"><b><?php _e( 'Custom Post/Page Meta Description', 'AutoDescription' ); ?></b> <abbr title="&lt;meta name=&quot;description&quot; /&gt;">[?]</abbr> <span class="hide-if-no-js"><?php printf( __( 'Characters Used: %s', 'AutoDescription' ), '<span id="genesis_description_chars">'. mb_strlen( hmpl_ad_get_custom_field( '_genesis_description' ) ) .'</span>' ); ?></span></label></p>
-	<p><textarea class="widefat" name="genesis_seo[_genesis_description]" id="genesis_description" rows="4" cols="4"><?php echo esc_textarea( hmpl_ad_get_custom_field( '_genesis_description' ) ); ?></textarea></p>
-
-	<p><label for="genesis_keywords"><b><?php _e( 'Custom Post/Page Meta Keywords, comma separated', 'AutoDescription' ); ?></b> <abbr title="&lt;meta name=&quot;keywords&quot; /&gt;">[?]</abbr></label></p>
-	<p><input class="large-text" type="text" name="genesis_seo[_genesis_keywords]" id="genesis_keywords" value="<?php echo esc_attr( hmpl_ad_get_custom_field( '_genesis_keywords' ) ); ?>" /></p>
-
-	<p><label for="genesis_canonical"><b><?php _e( 'Custom Canonical URL', 'AutoDescription' ); ?></b> <a href="http://www.mattcutts.com/blog/canonical-link-tag/" target="_blank" title="&lt;link rel=&quot;canonical&quot; /&gt;">[?]</a></label></p>
-	<p><input class="large-text" type="text" name="genesis_seo[_genesis_canonical_uri]" id="genesis_canonical" value="<?php echo esc_url( hmpl_ad_get_custom_field( '_genesis_canonical_uri' ) ); ?>" /></p>
-
-	<p><label for="genesis_redirect"><b><?php _e( 'Custom Redirect URL', 'AutoDescription' ); ?></b> <a href="http://www.google.com/support/webmasters/bin/answer.py?hl=en&amp;answer=93633" target="_blank" title="301 Redirect">[?]</a></label></p>
-	<p><input class="large-text" type="text" name="genesis_seo[redirect]" id="genesis_redirect" value="<?php echo esc_url( hmpl_ad_get_custom_field( 'redirect' ) ); ?>" /></p>
-
-	<br />
-
-	<p><b><?php _e( 'Robots Meta Settings', 'AutoDescription' ); ?></b></p>
-
-	<p>
-		<label for="genesis_noindex"><input type="checkbox" name="genesis_seo[_genesis_noindex]" id="genesis_noindex" value="1" <?php checked( hmpl_ad_get_custom_field( '_genesis_noindex' ) ); ?> />
-		<?php printf( __( 'Apply %s to this post/page', 'AutoDescription' ), hmpl_ad_code( 'noindex' ) ); ?> <a href="http://yoast.com/articles/robots-meta-tags/" target="_blank">[?]</a></label><br />
-
-		<label for="genesis_nofollow"><input type="checkbox" name="genesis_seo[_genesis_nofollow]" id="genesis_nofollow" value="1" <?php checked( hmpl_ad_get_custom_field( '_genesis_nofollow' ) ); ?> />
-		<?php printf( __( 'Apply %s to this post/page', 'AutoDescription' ), hmpl_ad_code( 'nofollow' ) ); ?> <a href="http://yoast.com/articles/robots-meta-tags/" target="_blank">[?]</a></label><br />
-
-		<label for="genesis_noarchive"><input type="checkbox" name="genesis_seo[_genesis_noarchive]" id="genesis_noarchive" value="1" <?php checked( hmpl_ad_get_custom_field( '_genesis_noarchive' ) ); ?> />
-		<?php printf( __( 'Apply %s to this post/page', 'AutoDescription' ), hmpl_ad_code( 'noarchive' ) ); ?> <a href="http://yoast.com/articles/robots-meta-tags/" target="_blank">[?]</a></label>
-	</p>
-	<?php
-
-}
-
-/**
- * Return custom field post meta data.
- *
- * Return only the first value of custom field. Return false if field is blank or not set.
- *
- * @since 2.0.0
- *
- * @param string $field Custom field key.
- *
- * @return string|boolean Return value or false on failure.
- * 
- * @thanks StudioPress :)
- */
-function hmpl_ad_get_custom_field( $field ) {
-
-	if ( null === get_the_ID() )
-		return '';
-
-	$custom_field = get_post_meta( get_the_ID(), $field, true );
-
-	if ( ! $custom_field )
-		return '';
-
-	//* Return custom field, slashes stripped, sanitized if string
-	return is_array( $custom_field ) ? stripslashes_deep( $custom_field ) : stripslashes( wp_kses_decode_entities( $custom_field ) );
-
-}
-
-/**
- * Save the SEO settings when we save a post or page.
- *
- * Some values get sanitized, the rest are pulled from identically named subkeys in the $_POST['genesis_seo'] array.
- *
- * @since 0.1.3
- *
- * @uses hmpl_ad_save_custom_fields() Perform checks and saves post meta / custom field data to a post or page.
- *
- * @param integer  $post_id Post ID.
- * @param stdClass $post    Post object.
- *
- * @return mixed Returns post id if permissions incorrect, null if doing autosave, ajax or future post, false if update
- *               or delete failed, and true on success.
- */
-function hmpl_ad_inpost_seo_save( $post_id, $post ) {
-
-	if ( ! isset( $_POST['genesis_seo'] ) )
-		return;
-
-	//* Merge user submitted options with fallback defaults
-	$data = wp_parse_args( $_POST['genesis_seo'], array(
-		'_genesis_title'         => '',
-		'_genesis_description'   => '',
-		'_genesis_keywords'      => '',
-		'_genesis_canonical_uri' => '',
-		'redirect'               => '',
-		'_genesis_noindex'       => 0,
-		'_genesis_nofollow'      => 0,
-		'_genesis_noarchive'     => 0,
-	) );
-
-	//* Sanitize the title, description, and tags
-	foreach ( (array) $data as $key => $value ) {
-		if ( in_array( $key, array( '_genesis_title', '_genesis_description', '_genesis_keywords' ) ) )
-			$data[ $key ] = strip_tags( $value );
-	}
-
-	hmpl_ad_save_custom_fields( $data, 'hmpl_ad_inpost_seo_save', 'genesis_inpost_seo_nonce', $post );
-
-}
-//add_action( 'save_post', 'hmpl_ad_inpost_seo_save', 1, 2 );

@@ -1,6 +1,6 @@
 === AutoDescription ===
 Contributors: Cybr
-Tags: seo, description, og, type, meta, ogtype, multisite, search, engine, optimization
+Tags: seo, description, title, og, type, meta, ogtype, multisite, search, engine, optimization, manual, canonical, rel, options, domain, mapping, genesis, robots, nofollow, noindex, noarchive, noodp, noydir
 Requires at least: 3.6.0
 Tested up to: 4.2.2
 Stable tag: 4.2.2
@@ -13,9 +13,11 @@ AutoDescription makes sure your SEO is always up-to-date without any configurati
 
 = AutoDescription =
 
-This plugin makes sure your site uses Description, Open Graph and LD+JSON.
+This plugin makes sure your site uses Description, Open Graph, LD+JSON, robots and a Canonical tag.
 
 No configuration is needed. Either Network Activate this or use it on a single site.
+
+You can also fine-tune each page's SEO, these options can be found beneath the content on the post's edit page.
 
 ***How it works***
 
@@ -26,6 +28,9 @@ No configuration is needed. Either Network Activate this or use it on a single s
 1. Then it will strip all shortcodes and HTML.
 1. From there it will make a sentence of maximum 160 characters and strips all words exceeding it.
 1. It will add ... if it exceeds.
+
+1. You can also add your own description on each page or post.
+2. This will override the automatically generated description.
 
 **og:image**
 
@@ -44,7 +49,10 @@ No configuration is needed. Either Network Activate this or use it on a single s
 **og:title**
 
 1. On the front page it will add "blogname - blog description"
-2. On any other page it will add: "page title - blogname"
+1. On any other page it will add: "page title - blogname"
+
+1. You can also add your own description on each page or post.
+2. This will override the automatically generated title.
 
 **og:url**
 
@@ -57,6 +65,18 @@ No configuration is needed. Either Network Activate this or use it on a single s
 **LD+JSON**
 
 1. This will create a script in the header and Google will try to use this to allow users to further search in your website from their search engine.
+
+**Canonical**
+
+1. This will tell search engines where to look and continue from there. This value can be adjusted and works perfectly with [Domain Mapping by WPMUdev].
+
+[Domain Mapping by WPMUdev]: https://premium.wpmudev.org/project/domain-mapping/
+	"Get Domain Mapping"
+
+**Robots**
+
+1. Set the nofollow, noindex and noarchive tags per page or post
+1. It's up to the search engine to honor these
 
 = Caching =
 
@@ -71,16 +91,34 @@ The output will be stored for each page, if you've edited a page the meta will s
 
 **Other notes**
 
-*This plugin fully supports Genesis themes, this plugin takes the Genesis SEO content under each post and page and the global Genesis SEO configuration page into account.*
+*This plugin fully supports Genesis themes and WPMUdev's Domain Mapping, this plugin takes the Genesis SEO content under each post and page and the global Genesis SEO configuration page into account.*
 *This plugin will work with any theme, however it will not look through Widgets or shortcodes for description. This means that one-page themes or pages built with page builders might leave an empty description.*
+*To counter this issue, fill in the meta boxes beneath each post or page edit screen's content.*
 
 == Installation ==
 
 1. Install AutoDescription either via the WordPress.org plugin directory, or by uploading the files to your server.
 1. Either Network Activate this plugin or activate it on a single site.
-1. That's it! There is no configuration needed.
+1. That's it! 
+1. Let the plugin automatically work or fine-tune each page with the meta boxes beneath the content.
 
 == Changelog ==
+
+= 2.0.0 =
+* This update is so big, it needs a new number :)
+* Added Canonical URL tag with WPMUdev's Domain Mapping support
+* Added per page/post options within a meta box beneath the content
+ * Add your own SEO meta title
+ * Add your own SEO meta description
+ * Add your own Canonical URL
+ * Disallow indexing by search engines (noindex)
+ * Disallow archiving by search engines (noarchive)
+ * Disallow link tracking on urls by search engines (nofollow)
+ * All these settings are merged with Genesis' and will be overwritten on save
+* Each page now has noopd and noydir by default if you're not using Genesis for better SEO consistency
+* More filters
+* Bugfixes
+* Exactly 1337 lines of glory :)
 
 = 1.3.0 =
 * Added SEO plugin detection (mainly WordPress SEO by Yoast)
@@ -108,12 +146,6 @@ The output will be stored for each page, if you've edited a page the meta will s
 = 1.0.0 =
 * Initial Release
 
-== Requirements ==
-
-WordPress 4.2.0 brings mb_strlen into the game, even if your server doesn't support it. But this plugin should be working **from at least 3.6.0** if your server supports mb_strlen.
-
-== Upgrade Notice ==
-
 == Filters ==
 
 = Add any of these filters to your theme's functions.php or a plugin to change this plugin's output =
@@ -126,3 +158,6 @@ WordPress 4.2.0 brings mb_strlen into the game, even if your server doesn't supp
 
 ***Always output meta data, regardless of caching:***
 `add_filter('hmpl_ad_load_logged_out_only', '__return_false');`
+
+***Disable meta boxes in post/page edit screen***
+`apply_filters( 'hmpl_ad_seobox', '__return_false' );`
