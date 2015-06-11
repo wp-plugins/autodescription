@@ -148,7 +148,8 @@ The output will be stored for each page, if you've edited a page the meta will s
 
 == Filters ==
 
-= Add any of these filters to your theme's functions.php or a plugin to change this plugin's output =
+= Add any of these filters to your theme's functions.php or a plugin to change this plugin's output: =
+
 
 ***Disable the plugin for a theme or page:***
 `add_filter('hmpl_ad_load', '__return_false');`
@@ -159,5 +160,5 @@ The output will be stored for each page, if you've edited a page the meta will s
 ***Always output meta data, regardless of caching:***
 `add_filter('hmpl_ad_load_logged_out_only', '__return_false');`
 
-***Disable meta boxes in post/page edit screen***
-`apply_filters( 'hmpl_ad_seobox', '__return_false' );`
+***Disable meta boxes in post/page edit screen:***
+`add_filter( 'hmpl_ad_seobox', '__return_false' );`
