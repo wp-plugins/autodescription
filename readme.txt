@@ -188,7 +188,7 @@ function my_before_autodescription() {
 				;
 	
 	//* Add mobile scaling viewport
-	$viewport 	= '<meta name="viewport" content="initial-scale=1.0,width=device-width,user-scalable=no"' . "\r\n";
+	$viewport 	= '<meta name="viewport" content="initial-scale=1.0,width=device-width,user-scalable=no" />' . "\r\n";
 	
 	//* Add the two together in another variable
 	$output = $prefetch . $viewport;
