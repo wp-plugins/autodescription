@@ -104,6 +104,18 @@ The output will be stored for each page, if you've edited a page the meta will s
 
 == Changelog ==
 
+= 2.0.1 =
+* Fixed bug where Genesis robots & canonical was still being shown
+* Made robots output more reliable
+* Renamed functions for more consistent plugin recognition
+* Improved performance on search and 404 pages by removing some meta
+* Added filter to og:image
+* Added generator tag with filter, if not used no generator tag will be displayed
+* Added filter for before and after output
+* The filters can be found under "Other notes" in this plugin's page.
+* Added filterable indicators in html code to show where the output starts and ends
+* More than 1337 lines :(
+
 = 2.0.0 =
 * This update is so big, it needs a new number :)
 * Added Canonical URL tag with WPMUdev's Domain Mapping support
@@ -157,8 +169,66 @@ The output will be stored for each page, if you've edited a page the meta will s
 ***Only allow this plugin to output if the user isn't logged in:***
 `add_filter('hmpl_ad_load_logged_out_only', '__return_true');`
 
-***Always output meta data, regardless of caching:***
+***Always output meta data, regardless of caching of user log in:***
 `add_filter('hmpl_ad_load_logged_out_only', '__return_false');`
 
 ***Disable meta boxes in post/page edit screen:***
 `add_filter( 'hmpl_ad_seobox', '__return_false' );`
+
+***Disable indicator in HTML output:***
+`add_filter( 'hmpl_ad_indicator', '__return_false' );`
+
+***Add custom meta before the output, example:***
+`add_filter('hmpl_ad_pre', 'my_before_autodescription' );
+function my_before_autodescription() {
+	
+	//* Add prefetching
+	$prefetch 	= 	'<link rel="dns-prefetch" href="//fonts.googleapis.com/">' . "\r\n"
+				.	'<link rel="dns-prefetch" href="//fonts.gstatic.com/">' . "\r\n"
+				;
+	
+	//* Add mobile scaling viewport
+	$viewport 	= '<meta name="viewport" content="initial-scale=1.0,width=device-width,user-scalable=no"' . "\r\n";
+	
+	//* Add the two together in another variable
+	$output = $prefetch . $viewport;
+	
+	//* Return the output
+	return $output;
+}`
+
+***Add custom meta after the output, example:***
+`add_filter('hmpl_ad_pro', 'my_after_autodescription' );
+function my_after_autodescription() {
+	
+	//* Add your app icons for apple and Windows (Phone) 8, don't forget to escape the urls!
+	$appicons 	= '<link rel="icon" type="image/x-icon" href="' .  esc_url(home_url( '/path/to/favicon.ico' ) ) . '" sizes="16x16">' . "\r\n"
+				. '<link rel="apple-touch-icon-precomposed" href="' .  esc_url(home_url( '/path/to/yourimage152px.png' ) ) . '" />' . "\r\n"
+				. '<meta name="msapplication-TileImage" content="' .  esc_url(home_url( '/path/to/yourimage144px.png' ) ) .'" />' . "\r\n"
+				. '<meta name="msapplication-TileColor" content="#f1f1f1" />' . "\r\n"
+				;
+	
+	return $appicons;
+}`
+
+***Add custom og image, example:***
+`add_filter('hmpl_og_image', 'my_og_image' );
+function my_og_image() {
+
+	//* You don't have to escape this url :)
+	$output = home_url( '/path/to/yourimage200px.jpg' );
+	
+	return $output;
+	
+}`
+
+***Add custom generator tag, example:***
+`add_filter('hmpl_ad_generator', 'my_custom_generator' );
+function my_custom_generator() {
+	
+	$output = 'MyAwesomeCompany';
+	
+	return $output;
+	
+}
+`

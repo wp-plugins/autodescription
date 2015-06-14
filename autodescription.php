@@ -3,7 +3,7 @@
  * Plugin Name: AutoDescription
  * Plugin URI: https://wordpress.org/plugins/autodescription/
  * Description: Automatically adds a description if previously empty based upon content and adds Open Graph tags.
- * Version: 2.0.0
+ * Version: 2.0.1
  * Author: Sybre Waaijer
  * Author URI: https://cyberwire.nl/
  * License: GPLv2 or later
@@ -51,6 +51,14 @@
  *			: Added canonical url tag with WPMUdev's Domain Mapping support
  *			: Added nofollow, noindex, noarchive tags per page
  *			: Added noodp and noydir on each page for better SEO consistency
+ *
+ * 2.0.1	: Improved performance on search and 404 pages
+ *			: Renamed functions for more consistent plugin recognition
+ *			: Added filters to image, generator, before output and after output of the meta
+ *			: Cleaned up code
+ *			: Made robots output more reliable
+ *			: Fixed bug where Genesis robots was still being shown
+ *			: Fixed bug where Genesis canonical was still being shown
  *
  * 2.1.0+	: Added global & front-page SEO settings
  *			: Give more reasons for this plugin to be standalone
@@ -216,7 +224,7 @@ function hmpl_ad_detect_seo_plugins() {
 /**
  * Detects if plugins outputting og:type exists
  *
- * @note isn't used in hmpl_og_image()
+ * @note isn't used in hmpl_ad_og_image()
  *
  * @uses hmpl_ad_detect_plugin()
  *
@@ -254,12 +262,10 @@ function hmpl_ad_has_json_ld_plugin() {
  * @param output
  */
 function hmpl_get_excerpt_by_id($excerpt = '') {
+	global $post_id;
 	
-	if (!is_404() && !is_search()) {
-		global $post_id;
-		$the_post = get_post($post_id);
-		$content = $the_post->post_content;
-	}
+	$the_post = get_post($post_id);
+	$content = $the_post->post_content;
 	
 	if ( empty($excerpt) )
 		$excerpt = wp_strip_all_tags(strip_shortcodes($content));
@@ -435,7 +441,7 @@ function hmpl_ad_the_description($description = '') {
  * 
  * @since 1.3.0
  */
-function hmpl_og_description($description = '') {
+function hmpl_ad_og_description($description = '') {
 	
 	if ( hmpl_ad_has_og_plugin() !== false ) 
 		return;
@@ -455,7 +461,7 @@ function hmpl_og_description($description = '') {
  * 
  * @since 1.0.0
  */
-function hmpl_og_locale($locale = '') {
+function hmpl_ad_og_locale($locale = '') {
 	
 	if ( hmpl_ad_has_og_plugin() !== false ) 
 		return;
@@ -475,7 +481,7 @@ function hmpl_og_locale($locale = '') {
  *
  * @since 1.0.0
  */
-function hmpl_og_title($title = '') {
+function hmpl_ad_og_title($title = '') {
 	
 	if ( hmpl_ad_has_og_plugin() !== false )
 		return;
@@ -518,7 +524,7 @@ function hmpl_og_title($title = '') {
  *
  * @since 1.1.0
  */
-function hmpl_og_type($type = '') {	
+function hmpl_ad_og_type($type = '') {	
 	
 	if ( hmpl_ad_has_og_plugin() !== false )
 		return;
@@ -552,7 +558,7 @@ function hmpl_og_type($type = '') {
  * @since 1.2.0
  * @output echo in header on front page
  */
-function hmpl_ld_json($render = '') {
+function hmpl_ad_ld_json($render = '') {
 	
 	//* Check for WPSEO LD+JSON
 	if ( hmpl_ad_has_json_ld_plugin() !== false )
@@ -587,10 +593,15 @@ function hmpl_ld_json($render = '') {
  *
  * @param string image url for image
  *
+ * @filter hmpl_og_image : Add your own image url
+ *						 : @param image
+ *
  * @since 1.3.0
  * @todo add filter for image (url)
  */
-function hmpl_og_image($image = '') {
+function hmpl_ad_og_image($image = '') {
+	
+	$image = apply_filters( 'hmpl_og_image', $image = '' );
 	
 	if ( empty ($image) )
 		$image = get_header_image();
@@ -612,7 +623,7 @@ function hmpl_og_image($image = '') {
  *
  * @since 1.3.0
  */
-function hmpl_og_url($url = '') {
+function hmpl_ad_og_url($url = '') {
 	
 	//* if WPSEO is active
 	if ( hmpl_ad_has_og_plugin() !== false )
@@ -637,7 +648,7 @@ function hmpl_og_url($url = '') {
  *
  * @since 1.3.0
  */
-function hmpl_og_sitename($sitename = '') {
+function hmpl_ad_og_sitename($sitename = '') {
 	
 	//* if WPSEO is active
 	if ( hmpl_ad_has_og_plugin() !== false )
@@ -660,7 +671,7 @@ function hmpl_og_sitename($sitename = '') {
  *
  * @since 2.0.0
  */
-function hmpl_canonical($url = '') {
+function hmpl_ad_canonical($url = '') {
 	global $wp;
 		
 	if ( empty($url) ) {				
@@ -709,6 +720,7 @@ function hmpl_canonical($url = '') {
 	
 	return $output;
 }
+
 /**
  * Output the `index`, `follow`, `noodp`, `noydir`, `noarchive` robots meta code in the document `head`.
  *
@@ -860,8 +872,9 @@ function hmpl_ad_robots() {
 
 	//* Add meta if any exist
 	if ( $meta )
-		printf( '<meta name="robots" content="%s" />' . "\r\n", implode( ',', $meta ) );
+		$output = sprintf( '<meta name="robots" content="%s" />' . "\r\n", implode( ',', $meta ) );
 
+	return $output;
 }
 
 /**
@@ -871,16 +884,23 @@ function hmpl_ad_robots() {
  *
  * @param blog_id : the blog id
  *
+ * @filter hmpl_ad_pre 	: Adds content before
+ * 						: @param before
+ *						: cached
+ * @filter hmpl_ad_pro 	: Adds content after
+ *						: @param after
+ *						: cached
+ *
  * @uses hmpl_ad_description()
- * @uses hmpl_og_image()
- * @uses hmpl_og_locale()
- * @uses hmpl_og_type()
- * @uses hmpl_og_title()
- * @uses hmpl_og_description()
- * @uses hmpl_og_url()
- * @uses hmpl_og_sitename()
- * @uses hmpl_ld_json()
- * @uses hmpl_canonical()
+ * @uses hmpl_ad_og_image()
+ * @uses hmpl_ad_og_locale()
+ * @uses hmpl_ad_og_type()
+ * @uses hmpl_ad_og_title()
+ * @uses hmpl_ad_og_description()
+ * @uses hmpl_ad_og_url()
+ * @uses hmpl_ad_og_sitename()
+ * @uses hmpl_ad_ld_json()
+ * @uses hmpl_ad_canonical()
  *
  * @output echo in header
  */
@@ -893,31 +913,62 @@ function add_hmpl_meta_tags() {
 	 * Override Woo Themes Title
 	 * @todo test this
 	 */
-	//add_filter( 'woo_title', 'hmpl_og_title', 99 );
-	
-	//* Remove canonical header
-	remove_action( 'wp_head', 'rel_canonical', 11);
-	remove_action( 'wp_head','genesis_canonical', 5 );
+	//add_filter( 'woo_title', 'hmpl_ad_og_title', 99 );
 	
 	$output = wp_cache_get( 'hmpl_autodescription_output_' . $blog_id . '_' . $page_id );
 	if ( false === $output ) {
-			
-		$output	= hmpl_ad_the_description()
-				. hmpl_og_image()
-				. hmpl_og_locale()
-				. hmpl_og_type()
-				. hmpl_og_title()
-				. hmpl_og_description()
-				. hmpl_og_url()
-				. hmpl_og_sitename()
-				. hmpl_ld_json()
-				. hmpl_canonical()
-				. hmpl_ad_robots()
-				;
-				
+		
+		$indicator = apply_filters( 'hmpl_ad_indicator', '__return_true' );
+		
+		$indicatorbefore = '';
+		$indicatorafter = '';
+		
+		if ( $indicator !== false ) {
+			$indicatorbefore = '<!-- Start AutoDescription by Sybre Waaijer -->' . "\r\n"; 
+			$indicatorafter = '<!-- End AutoDescription by Sybre Waaijer -->' . "\r\n";
+		}
+		
+		$before = apply_filters( 'hmpl_ad_pre', $before = '' );
+		
+		$robots = hmpl_ad_robots();
+		
+		//* Limit processing on 404 or search
+		if ( !is_404() && !is_search() ) {
+			$output	= hmpl_ad_the_description()
+					. hmpl_ad_og_image()
+					. hmpl_ad_og_locale()
+					. hmpl_ad_og_type()
+					. hmpl_ad_og_title()
+					. hmpl_ad_og_description()
+					. hmpl_ad_og_url()
+					. hmpl_ad_og_sitename()
+					. hmpl_ad_ld_json()
+					. hmpl_ad_canonical()
+					;
+		} else {
+			$output	= hmpl_ad_og_locale()
+					. hmpl_ad_og_type()
+					. hmpl_ad_og_title()
+					. hmpl_ad_og_url()
+					. hmpl_ad_og_sitename()
+					. hmpl_ad_ld_json()
+					. hmpl_ad_canonical()
+					;
+		}
+		
+		$after = apply_filters( 'hmpl_ad_pro', $after = '' );
+		
+		//* This should get its own function?
+		$generator = apply_filters( 'hmpl_ad_generator', $generator = '' );
+		
+		if ( !empty($generator) )
+			$generator = '<meta name="generator" content="' . esc_attr($generator) . '" />' . "\r\n";
+		
+		$output = "\r\n" . $indicatorbefore . $robots . $before . $output . $after . $generator . $indicatorafter;
+		
 		wp_cache_set( 'hmpl_autodescription_output_' . $blog_id . '_' . $page_id, $output );
 	}
-	
+		
 	echo $output;
 }
 
@@ -957,24 +1008,33 @@ function hmpl_auto_description_run() {
 			$logged_in = false;
 		}
 		
+		//* Genesis only, checks if description is present
+		$theme_info = wp_get_theme()->get('Template');
+			
+		//* Remove Genesis output
 		if( $theme_info == 'genesis' ) {
-			remove_action( 'genesis_meta', 'genesis_seo_meta_description', 10 );
-			remove_action( 'genesis_meta', 'genesis_robots_meta', 10 );
+			remove_action( 'genesis_meta', 'genesis_seo_meta_description', 10 ); //genesis seo
+			remove_action( 'genesis_meta','genesis_seo_meta_keywords' ); //clean up residue (meta tags)
+			remove_action( 'wp_head','genesis_canonical', 5 ); //genesis canonical
+			remove_action( 'genesis_meta', 'genesis_robots_meta' ); //genesis robots
 		}
 		
+		//* Remove canonical header from WP
+		remove_action( 'wp_head', 'rel_canonical' );
+		
+		//* Remove generator tag from WP
+		add_filter( 'the_generator', '__return_false' );
+		
 		if ( ! $logged_in ) {
-			//* Genesis only, checks if description is present
-			$theme_info = wp_get_theme()->get('Template');
-
 			if( $theme_info == 'genesis' ) {
-				add_action( 'genesis_meta', 'add_hmpl_meta_tags', 10 );
+				add_action( 'genesis_meta', 'add_hmpl_meta_tags', 9 );
 			} else {
-				add_action( 'wp_head', 'add_hmpl_meta_tags', 1 );
+				add_action( 'wp_head', 'add_hmpl_meta_tags', 9 );
 			}
 		}
 	}
 }
-add_action( 'init', 'hmpl_auto_description_run', 10 );
+add_action( 'init', 'hmpl_auto_description_run', 99 );
 
 /* Start Meta boxes
 ----------------------------------------------------------------------------------------------------*/
