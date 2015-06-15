@@ -104,6 +104,9 @@ The output will be stored for each page, if you've edited a page the meta will s
 
 == Changelog ==
 
+= 2.0.2 =
+* Fixed Javascript bug
+
 = 2.0.1 =
 * Fixed bug where Genesis robots & canonical was still being shown
 * Made robots output more reliable

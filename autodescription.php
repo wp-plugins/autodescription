@@ -3,7 +3,7 @@
  * Plugin Name: AutoDescription
  * Plugin URI: https://wordpress.org/plugins/autodescription/
  * Description: Automatically adds a description if previously empty based upon content and adds Open Graph tags.
- * Version: 2.0.1
+ * Version: 2.0.2
  * Author: Sybre Waaijer
  * Author URI: https://cyberwire.nl/
  * License: GPLv2 or later
@@ -59,6 +59,8 @@
  *			: Made robots output more reliable
  *			: Fixed bug where Genesis robots was still being shown
  *			: Fixed bug where Genesis canonical was still being shown
+ *
+ * 2.0.2	: Fixed Javascript bug
  *
  * 2.1.0+	: Added global & front-page SEO settings
  *			: Give more reasons for this plugin to be standalone
@@ -1181,33 +1183,23 @@ function hmpl_ad_add_inpost_seo_box() {
 		add_meta_box( 'hmpl_ad_inpost_seo_box', __( 'Page SEO Settings', 'AutoDescription' ), 'hmpl_ad_inpost_seo_box', $type, 'normal', 'high' );
 	}
 	
-	//* Print javascript in footer
-	if ( $post || $page ) {
-		add_action( 'admin_print_scripts', 'hmpl_ad_javascript', 11 );
-	}
+	//* Add javascript file
+	if ( $post || $page )
+		add_action( 'admin_enqueue_scripts', 'hmpl_ad_enqueue_javascript', 11 );
 	
 }
 
 /**
  * Javascript, adds counter to SEO title and description
  *
- * @since 2.0.0
+ * @since 2.0.2
  *
  * @used by hmpl_ad_add_inpost_seo_box
+ *
+ * @todo cache busting
  */
-function hmpl_ad_javascript() {
-	
-	//* The javascript, it's pretty minified like this.
-	$js = "jQuery(function ($) {"
-		.	"$('#autodescription_title, #autodescription_description').on('keyup', function(event){"
-		.		"$('#' + event.target.id + '_chars').html($(event.target).val().length.toString());"
-		. 	"});"
-		. "});"
-		;
-		
-	$output = "<script type='text/javascript'>" . $js . "</script>";
-	
-	echo $output;
+function hmpl_ad_enqueue_javascript($hook) {
+	wp_enqueue_script( 'hmpl_ad_script', plugin_dir_url( __FILE__ ) . '/js/autodescription.js', array( 'jquery' ), '', true );
 }
 
 /**
