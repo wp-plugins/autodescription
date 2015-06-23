@@ -1,10 +1,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: AutoDescription\n"
-"POT-Creation-Date: 2015-05-28 22:25+0100\n"
-"PO-Revision-Date: 2015-05-28 22:25+0100\n"
+"POT-Creation-Date: 2015-06-23 10:20+0100\n"
+"PO-Revision-Date: 2015-06-23 10:25+0100\n"
 "Last-Translator: \n"
-"Language-Team: \n"
+"Language-Team: Sybre Waaijer <info@hostmijnpagina.nl>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -19,6 +19,41 @@ msgstr ""
 "X-Poedit-SearchPath-0: .\n"
 "X-Poedit-SearchPathExcluded-0: *.js\n"
 
-#: autodescription.php:106
+#: autodescription.php:373
 msgid "on"
-msgstr "op"
+msgstr ""
+
+#: autodescription.php:1178
+msgid "Post SEO Settings"
+msgstr "Bericht SEO Instellingen"
+
+#: autodescription.php:1183
+msgid "Page SEO Settings"
+msgstr "Pagina SEO Instellingen"
+
+#: autodescription.php:1220
+msgid "Custom Document Title"
+msgstr "Aangepaste Document Titel"
+
+#: autodescription.php:1220 autodescription.php:1223
+#, php-format
+msgid "Characters Used: %s"
+msgstr "Gebruikte Tekens: %s"
+
+#: autodescription.php:1223
+msgid "Custom Post/Page Meta Description"
+msgstr "Aangepaste Bericht/Pagina Meta Beschrijving"
+
+#: autodescription.php:1226
+msgid "Custom Canonical URL"
+msgstr "Aangepaste Canonical URL"
+
+#: autodescription.php:1231
+msgid "Robots Meta Settings"
+msgstr "Robots Meta Instellingen"
+
+#: autodescription.php:1235 autodescription.php:1238
+#: autodescription.php:1241
+#, php-format
+msgid "Apply %s to this post/page"
+msgstr "Pas %s toe op deze bericht/pagina"
