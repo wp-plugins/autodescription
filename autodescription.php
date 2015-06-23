@@ -3,7 +3,7 @@
  * Plugin Name: AutoDescription
  * Plugin URI: https://wordpress.org/plugins/autodescription/
  * Description: Automatically adds a description if previously empty based upon content and adds Open Graph tags.
- * Version: 2.0.2
+ * Version: 2.0.3
  * Author: Sybre Waaijer
  * Author URI: https://cyberwire.nl/
  * License: GPLv2 or later
@@ -491,6 +491,7 @@ function hmpl_ad_title($title, $sep, $seplocation) {
 	$sep = '-';
 	$seplocation = 'right';
 	
+	//* Get title from custom field, empty it if it's not there to override the default title
 	$title = hmpl_ad_get_custom_field( '_genesis_title' ) ? hmpl_ad_get_custom_field( '_genesis_title' ) : '';
 	
 	if ( empty ($title) ) {
@@ -506,7 +507,7 @@ function hmpl_ad_title($title, $sep, $seplocation) {
 		if ( is_front_page() ) {
 			$tagline = get_bloginfo( 'description', 'raw');
 			
-			$title = sprintf( '%s %s %s', $blogname, $sep, $tagline);
+			$title = $blogname . " $sep " . $tagline;
 		}
 		
 		if ( empty ($title) ) {
@@ -554,7 +555,7 @@ function hmpl_ad_og_title() {
 	if ( hmpl_ad_has_og_plugin() !== false )
 		return;
 	
-	$output = '<meta property="og:title" content="' . hmpl_ad_title( '' ) . '" />' . "\r\n";
+	$output = '<meta property="og:title" content="' . hmpl_ad_title() . '" />' . "\r\n";
 	
 	return $output;
 }
@@ -617,7 +618,7 @@ function hmpl_ad_ld_json($render = '') {
 	$url = esc_url( home_url( '/' ) );
 	$name = json_encode( get_bloginfo('name') );
 	$actiontype = json_encode( 'SearchAction' );
-	$target = esc_url( home_url( '/' )) . '?s={search_term}';
+	$target = esc_url( home_url( '/' ) ) . '?s={search_term}';
 	$queryaction = json_encode( 'required name=search_term' );
 	
 	if ( empty ($render) )
@@ -744,7 +745,7 @@ function hmpl_ad_canonical($url = '') {
 					$mappeddomainpre = wp_cache_get('hmpl_mappeddomainpre_' . $blog_id, 'hmpl_mainblog' );
 					if ( false === $mappeddomainpre ) {
 						$mappeddomainpre = $wpdb->get_var($wpdb->prepare("SELECT domain FROM {$wpdb->base_prefix}domain_mapping WHERE blog_id = %d", $blog_id));
-						wp_cache_set('hmpl_mappeddomainpre_' . $blog_id, $mappeddomainpre, 'hmpl_mainblog', 14400 );
+						wp_cache_set('hmpl_mappeddomainpre_' . $blog_id, $mappeddomainpre, 'hmpl_mainblog', 3600 ); // 1 hour
 					}
 					
 					if ( !empty($mappeddomainpre) ) {
