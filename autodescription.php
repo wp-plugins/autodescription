@@ -62,6 +62,11 @@
  *
  * 2.0.2	: Fixed Javascript bug
  *
+ * 2.0.3	: Added Dutch Translation
+ *			: Applied the title output to the <title> tag
+ *			: Cleaned up code
+ *			: Various bugfixes
+ *
  * 2.1.0+	: Added global & front-page SEO settings
  *			: Give more reasons for this plugin to be standalone
  *
@@ -313,7 +318,7 @@ function hmpl_ad_generate_description($description = '') {
 				//* @Todo create this option
 				//	$description = hmpl_ad_get_seo_option( 'home_description' ) ? hmpl_ad_get_seo_option( 'home_description' ) : get_bloginfo( 'description' );	
 				
-				//* Genesis fallback
+				//* Genesis fallback until option is created
 				//	if ( empty($description) )
 					$description = genesis_get_seo_option( 'home_description' ) ? genesis_get_seo_option( 'home_description' ) : '';
 			}
@@ -366,15 +371,16 @@ function hmpl_ad_generate_description($description = '') {
 	if ( !is_string($description) || empty($description) ) { //* HEAVY CODE (adds .5s processing time with 241k characters on 6-core 2.4GHz prefork)
 		global $post;
 	
-		//* These values should've been escaped already prior to fetching them.
-		$hmpl_title = get_the_title($post);
-		$hmpl_blogname = get_bloginfo('name');
-		$hmpl_excut = '';
-		$hmpl_on = __('on', 'AutoDescription'); // Post Title "on" Blog Name - the excerpt
+		//* These values should've been escaped prior to fetching them.
+		$title = get_the_title($post);
+		$blogname = get_bloginfo('name');
+		$excut = '';
+		$sep = '';
+		$on = __( 'on', 'AutoDescription' ); // Post Title "on" Blog Name - the excerpt
 		
 		$hmpl_excerpt = hmpl_get_excerpt_by_id();
 		
-		$hmpl_maxcharlength = 160 - mb_strlen($hmpl_title . $hmpl_on . $hmpl_blogname);
+		$hmpl_maxcharlength = 160 - mb_strlen($title . $on . $blogname);
 		$hmpl_excerptlength = mb_strlen( $hmpl_excerpt );
 		
 		if ( $hmpl_excerptlength > $hmpl_maxcharlength ) {
@@ -394,23 +400,17 @@ function hmpl_ad_generate_description($description = '') {
 			} else {
 				$hmpl_excerpt = $subex;
 			}
-			$hmpl_excut = '...';
+			$excut = '...';
 		}
-		$hmpl_excerpt = str_replace(' ...', '...', $hmpl_excerpt . $hmpl_excut);
+		$hmpl_excerpt = str_replace(' ...', '...', $hmpl_excerpt . $excut);
+				
+		if ( !empty($hmpl_excerpt ) )
+			$sep = '-';
 		
-		$description = sprintf( '%s %s %s - %s', $hmpl_title, $hmpl_on, $hmpl_blogname, $hmpl_excerpt);		
+		$description = sprintf( '%s %s %s %s %s', $title, $on, $blogname, $sep, $hmpl_excerpt);		
 	}
 	
-	//* Make sure no spaces are added at the end, adds " symbol (used to determine the end of line)
-	$description = $description . '"';
-	$output = str_replace(' "', '"', $description);
-	
-	//* Remove the last " to make the code easier to read and manipulate
-	if ( function_exists( mb_substr() ) ) {
-		$output = mb_substr($output, 0, -1);
-	} else {
-		$output = substr($output, 0, -1);
-	}
+	$output = trim( $description );
 	
 	return $output;
 }
@@ -479,46 +479,86 @@ function hmpl_ad_og_locale($locale = '') {
 /**
  * Get the title
  *
- * @uses hmpl_ad_has_og_plugin()
- *
  * @since 1.0.0
  */
-function hmpl_ad_og_title($title = '') {
+function hmpl_ad_title($title, $sep, $seplocation) {	
+	global $post,$wp_query;
+	
+	if ( is_feed() )
+		return trim( $title );
+	
+	//* Todo: make options for these
+	$sep = '-';
+	$seplocation = 'right';
+	
+	$title = hmpl_ad_get_custom_field( '_genesis_title' ) ? hmpl_ad_get_custom_field( '_genesis_title' ) : '';
+	
+	if ( empty ($title) ) {
+		$theme_info = wp_get_theme()->get('Template');
+		if( $theme_info == 'genesis' ) {
+			$title = genesis_get_custom_field( '_genesis_title' ) ? genesis_get_custom_field( '_genesis_title' ) : '';
+		}
+	}
+	
+	if ( empty ($title) ) {	
+		$blogname = get_bloginfo('name');
+		
+		if ( is_front_page() ) {
+			$tagline = get_bloginfo( 'description', 'raw');
+			
+			$title = sprintf( '%s %s %s', $blogname, $sep, $tagline);
+		}
+		
+		if ( empty ($title) ) {
+			$posttitle = get_the_title($post);
+			
+			$title = $posttitle . " $sep " . $blogname;
+		}
+		
+		if ( is_category() ) {
+			$term  = $wp_query->get_queried_object();
+			$title = ! empty( $term->meta['doctitle'] ) ? $blogname . " $sep " . $term->meta['doctitle'] : $title;
+		}
+
+		if ( is_tag() ) {
+			$term  = $wp_query->get_queried_object();
+			$title = ! empty( $term->meta['doctitle'] ) ? $blogname . " $sep " . $term->meta['doctitle'] : $title;
+		}
+
+		if ( is_tax() ) {
+			$term  = get_term_by( 'slug', get_query_var( 'term' ), get_query_var( 'taxonomy' ) );
+			$title = ! empty( $term->meta['doctitle'] ) ? $blogname . " $sep " . wp_kses_stripslashes( wp_kses_decode_entities( $term->meta['doctitle'] ) ) : $title;
+		}
+
+		if ( is_author() ) {
+			$user_title = get_the_author_meta( 'doctitle', (int) get_query_var( 'author' ) );
+			$title      = $user_title ? $blogname . " $sep " . $user_title : $title;
+		}
+	}
+	
+	$title = esc_html( trim( $title ) );
+	
+	return $title;
+}
+
+/**
+ * Process the title to WordPress
+ *
+ * @uses hmpl_ad_title()
+ * @uses hmpl_ad_has_og_plugin()
+ *
+ * @since 2.0.3
+ */
+function hmpl_ad_og_title() {
 	
 	if ( hmpl_ad_has_og_plugin() !== false )
 		return;
 	
-	global $post;
-	
-	if ( empty ($title) ) {
-		$title = hmpl_ad_get_custom_field( '_genesis_title' ) ? hmpl_ad_get_custom_field( '_genesis_title' ) : '';
-			
-		$theme_info = wp_get_theme()->get('Template');
-		if( $theme_info == 'genesis' ) {
-			if ( empty($title) )
-				$url = genesis_get_custom_field( '_genesis_title' ) ? genesis_get_custom_field( '_genesis_title' ) : '';
-		}
-		
-		if ( empty ($title) ) {	
-			$blogname = get_bloginfo('name');
-			
-			if ( is_front_page() ) {
-				$tagline = get_bloginfo( 'description', 'raw');
-				
-				$title = sprintf( '%s - %s', $blogname, $tagline);
-			} else {
-				$posttitle = get_the_title($post);
-				
-				$title = $posttitle . ' - ' . $blogname;
-			}
-		}
-	}
-	
-	$output = '<meta property="og:title" content="' . esc_attr($title) . '" />' . "\r\n";
+	$output = '<meta property="og:title" content="' . hmpl_ad_title( '' ) . '" />' . "\r\n";
 	
 	return $output;
 }
-
+ 
 /**
  * Get the type
  *
@@ -856,7 +896,7 @@ function hmpl_ad_robots() {
 		$meta = array(
 			'noindex'   => '',
 			'nofollow'  => '',
-			//* @Todo: create these
+			//* @Todo: create these in global options
 			'noarchive' => hmpl_ad_get_seo_option( 'noarchive' ) ? 'noarchive' : '',
 			'noodp'     => true ? 'noodp' : 'noodp', // not optional atm
 		//	'noodp'     => hmpl_ad_get_seo_option( 'noodp' ) ? 'noodp' : 'noodp',
@@ -910,12 +950,6 @@ function add_hmpl_meta_tags() {
 	global $blog_id;
 	
 	$page_id = get_queried_object_id();
-		
-	/**
-	 * Override Woo Themes Title
-	 * @todo test this
-	 */
-	//add_filter( 'woo_title', 'hmpl_ad_og_title', 99 );
 	
 	$output = wp_cache_get( 'hmpl_autodescription_output_' . $blog_id . '_' . $page_id );
 	if ( false === $output ) {
@@ -929,7 +963,7 @@ function add_hmpl_meta_tags() {
 			$indicatorbefore = '<!-- Start AutoDescription by Sybre Waaijer -->' . "\r\n"; 
 			$indicatorafter = '<!-- End AutoDescription by Sybre Waaijer -->' . "\r\n";
 		}
-		
+				
 		$before = apply_filters( 'hmpl_ad_pre', $before = '' );
 		
 		$robots = hmpl_ad_robots();
@@ -1026,6 +1060,15 @@ function hmpl_auto_description_run() {
 		
 		//* Remove generator tag from WP
 		add_filter( 'the_generator', '__return_false' );
+		
+		//* Override WordPress Title
+		add_filter( 'wp_title', 'hmpl_ad_title', 99, 3 );
+		
+		/**
+		 * Override Woo Themes Title
+		 */
+		add_filter( 'woo_title', 'hmpl_ad_title', 99 );
+		
 		
 		if ( ! $logged_in ) {
 			if( $theme_info == 'genesis' ) {

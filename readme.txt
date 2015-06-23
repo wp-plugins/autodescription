@@ -104,6 +104,12 @@ The output will be stored for each page, if you've edited a page the meta will s
 
 == Changelog ==
 
+= 2.0.3 =
+* Applied the title output to the Title tag
+* Cleaned up code
+* Various bugfixes
+* Added Dutch translation
+
 = 2.0.2 =
 * Fixed Javascript bug
 

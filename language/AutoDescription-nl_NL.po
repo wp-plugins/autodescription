@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AutoDescription\n"
 "POT-Creation-Date: 2015-06-23 10:20+0100\n"
-"PO-Revision-Date: 2015-06-23 10:25+0100\n"
+"PO-Revision-Date: 2015-06-23 11:54+0100\n"
 "Last-Translator: \n"
 "Language-Team: Sybre Waaijer <info@hostmijnpagina.nl>\n"
 "Language: nl\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: autodescription.php:373
 msgid "on"
-msgstr ""
+msgstr "op"
 
 #: autodescription.php:1178
 msgid "Post SEO Settings"
