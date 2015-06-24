@@ -3,7 +3,7 @@
  * Plugin Name: AutoDescription
  * Plugin URI: https://wordpress.org/plugins/autodescription/
  * Description: Automatically adds a description if previously empty based upon content and adds Open Graph tags.
- * Version: 2.0.4
+ * Version: 2.0.5
  * Author: Sybre Waaijer
  * Author URI: https://cyberwire.nl/
  * License: GPLv2 or later
@@ -70,8 +70,14 @@
  * 2.0.4	: Fixed Domain Mapping canonical URL
  *			: Fixed canonical URL scheme
  *
+ * 2.0.5	: Added featured image to og:image before header image
+ *			: Added expanded filter to og:image
+ *			: Removed hmpl_ad_title php warnings
+ *			: Added Title seperator filter
+ *
  * 2.1.0+	: Added global & front-page SEO settings
  *			: Give more reasons for this plugin to be standalone
+ *			: Sitemaps!
  *
  * + Coming soon
  *
@@ -392,12 +398,8 @@ function hmpl_ad_generate_description($description = '') {
 						
 			$exwords = explode( ' ', $subex );
 			
-			if ( function_exists( mb_strlen() ) ) {
-				$excut = - ( mb_strlen( $exwords[ count( $exwords ) - 1 ] ) );
-			} else {
-				$excut = - ( strlen( $exwords[ count( $exwords ) - 1 ] ) );
-			}
-			
+			$excut = - ( mb_strlen( $exwords[ count( $exwords ) - 1 ] ) );
+						
 			if ( $excut < 0 ) {
 				$hmpl_excerpt = mb_substr( $subex, 0, $excut );				
 			} else {
@@ -483,16 +485,21 @@ function hmpl_ad_og_locale($locale = '') {
  * Get the title
  *
  * @since 1.0.0
+ *
+ * 
  */
-function hmpl_ad_title($title, $sep, $seplocation) {	
+function hmpl_ad_title($title = '', $sep = '', $seplocation = 'right') {	
 	global $post,$wp_query;
 	
 	if ( is_feed() )
 		return trim( $title );
 	
-	//* Todo: make options for these
-	$sep = '-';
-	$seplocation = 'right';
+	/**
+	 * Filters the seperator (too lazy to document this further D:)
+	 *
+	 * @since 2.0.5
+	 */
+	$sep = apply_filters( 'hmpl_ad_title_seperator', $sep = '-');
 	
 	//* Get title from custom field, empty it if it's not there to override the default title
 	$title = hmpl_ad_get_custom_field( '_genesis_title' ) ? hmpl_ad_get_custom_field( '_genesis_title' ) : '';
@@ -558,7 +565,7 @@ function hmpl_ad_og_title() {
 	if ( hmpl_ad_has_og_plugin() !== false )
 		return;
 	
-	$output = '<meta property="og:title" content="' . hmpl_ad_title() . '" />' . "\r\n";
+	$output = '<meta property="og:title" content="' . hmpl_ad_title( '' ) . '" />' . "\r\n";
 	
 	return $output;
 }
@@ -639,25 +646,125 @@ function hmpl_ad_ld_json($render = '') {
  *
  * @param string image url for image
  *
- * @filter hmpl_og_image : Add your own image url
- *						 : @param image
+ * @filter hmpl_og_image_args 	: @param image the image url
+ *								: @param override always use the set url
+ *								: @param frontpage always use the set url on the front page
+ * The image set in the filter will always be used as fallback
  *
  * @since 1.3.0
- * @todo add filter for image (url)
+ *
+ * @todo create options and upload area
  */
-function hmpl_ad_og_image($image = '') {
+function hmpl_ad_og_image($image = '', $args = array() ) {
+	global $post;
 	
-	$image = apply_filters( 'hmpl_og_image', $image = '' );
+	$post_id = $post->ID;
+		
+	$defaults = array(
+			'post_id'	=> $post_id,
+			'size'		=> 'full',
+			'icon'		=> 0,
+			'attr'		=> '',
+			'image'		=> '',
+			'override'	=> false,
+			'frontpage'	=> true,
+		);
+		
+	/**
+	 * @since 2.0.5
+	 */
+	$defaults = apply_filters( 'hmpl_og_image_args', $defaults, $args );
 	
+	$args = wp_parse_args( $args, $defaults );
+	
+	//* Get image from args filter
+	$image = $args['image'];	
+	
+	/**
+	 * Deprecated filter hmpl_og_image
+	 * used for og_image url
+	 *
+	 * @since 2.0.5
+	 */
+	$deprecated = apply_filters( 'hmpl_og_image', $deprecated = '' );
+	if ( !empty( $deprecated ) ) {
+		_deprecated_function( 'hmpl_og_image', '2.0.5', 'hmpl_og_image_args()' );
+		$image = $deprecated;
+	}
+	
+	$is_front = $post_id == get_option( 'page_on_front' ) ? true : false;
+	
+	/**
+	 * Bit confusing with so many arguments... but it works as intended
+	 *
+	 * Fetch image if
+	 * + no image found (always go)
+	 * + override is true (always go)
+	 * + is not front page AND frontpage override is set to true
+	 */
+	if ( empty($image) || $args['override'] !== false || (!$is_front && $args['frontpage'] !== false) ) {			
+		if ( has_post_thumbnail( $args['post_id'] ) ) {
+			$id = get_post_thumbnail_id( $args['post_id'] );
+			$src = wp_get_attachment_image_src( $id, $args['size'], $args['icon'], $args['attr'] );
+			
+			/* 
+			// @todo
+			// Still looking for a good way to implement this :)
+			// Image needs to be saved somewhere, but I don't want to automatically fill up the library for unaware users. Create option?
+			
+			$w = $src[1];
+			$h = $src[2];
+			
+			//* Prefered 1500px, resize it
+			if ( $w > 1500 || $h > 1500 ) {
+				//* Square
+				if ( $w == $h ) {
+					$w = 1500;
+					$h = 1500;
+					
+				//* Landscape
+				} elseif ( $w > $h ) {
+					$dev = $w / 1500;
+					
+					$h = $h / $dev;
+					
+					$h = round( $h );
+					$w = 1500;
+				
+				//* Portrait
+				} elseif ( $h > $w ) {
+					$dev = $h / 1500;
+					
+					$w = $w / $dev;
+					
+					$w = round( $w );
+					$h = 1500;
+				}
+				
+				// Save image here
+				
+				// Make custom callback function and place it higher up in this function to prevent double looping
+				
+				// Fetch the new image ID = $id
+				
+				$src = wp_get_attachment_image_src( $id, array($w,$h), $args['icon'], $args['attr'] );
+			}
+			*/
+			
+			$image = $src[0];
+		}
+	}
+	
+	//* Fallback: Get header image if exists
 	if ( empty ($image) )
 		$image = get_header_image();
-	
-	$headerimage = esc_url_raw($image);
-	
-	if ( !empty( $image ) )
-		$output = '<meta property="og:image" content="' . $headerimage . '" />' . "\r\n";
-	
-	return $output;
+		
+	if ( !empty( $image ) ) {
+		$url = esc_url_raw($image);
+		$output = '<meta property="og:image" content="' . $url . '" />' . "\r\n";
+		
+		return $output;
+	}
 }
 
 /**
@@ -799,7 +906,7 @@ function hmpl_ad_canonical($url = '') {
  *
  * @return null Return early if blog is not public.
  */
-function hmpl_ad_robots() {
+function hmpl_ad_robots($output = '') {
 	//* If the blog is private, then following logic is unnecessary as WP will insert noindex and nofollow
 	if ( ! get_option( 'blog_public' ) )
 		return;

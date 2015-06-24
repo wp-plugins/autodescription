@@ -104,6 +104,12 @@ The output will be stored for each page, if you've edited a page the meta will s
 
 == Changelog ==
 
+= 2.0.5 =
+* Added featured image to og:image (if set)
+* Added expanded filter to og:image, read "other notes" for more information
+* Fixed all PHP warnings
+* Added filter for title seperator (hmpl_ad_title_seperator)
+
 = 2.0.4 =
 * Fixed Domain Mapping Canonical URL
 * Fixed Canonical URL scheme
@@ -224,15 +230,31 @@ function my_after_autodescription() {
 	return $appicons;
 }`
 
-***Add custom og image, example:***
+***Add custom og image, example (deprecated, use hmpl_og_image_args ):***
 `add_filter('hmpl_og_image', 'my_og_image' );
 function my_og_image() {
 
 	//* You don't have to escape this url :)
 	$output = home_url( '/path/to/yourimage200px.jpg' );
 	
-	return $output;
+	return $output;	
+}`
+
+***Add custom og image arguments, example:***
+`add_filter('hmpl_og_image_args', 'my_awesome_og_image' );
+function my_awesome_og_image() {
+
+	//* You don't have to escape this url :)
+	$args['image'] = home_url( '/path/to/yourimage200_to_1500px.jpg' );
 	
+	//* Set this to true if you don't want featured images to be used in og:image
+	//* args['image'] has to be set for this to work
+	$args['override'] = false;
+	
+	//* Set this to false if you wish that the homepage featured image overrides the URL set above
+	$args['frontpage'] = true;
+	
+	return $args;	
 }`
 
 ***Add custom generator tag, example:***
@@ -243,5 +265,4 @@ function my_custom_generator() {
 	
 	return $output;
 	
-}
-`
+}`
