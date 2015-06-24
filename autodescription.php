@@ -3,7 +3,7 @@
  * Plugin Name: AutoDescription
  * Plugin URI: https://wordpress.org/plugins/autodescription/
  * Description: Automatically adds a description if previously empty based upon content and adds Open Graph tags.
- * Version: 2.0.3
+ * Version: 2.0.4
  * Author: Sybre Waaijer
  * Author URI: https://cyberwire.nl/
  * License: GPLv2 or later
@@ -66,6 +66,9 @@
  *			: Applied the title output to the <title> tag
  *			: Cleaned up code
  *			: Various bugfixes
+ *
+ * 2.0.4	: Fixed Domain Mapping canonical URL
+ *			: Fixed canonical URL scheme
  *
  * 2.1.0+	: Added global & front-page SEO settings
  *			: Give more reasons for this plugin to be standalone
@@ -718,48 +721,68 @@ function hmpl_ad_canonical($url = '') {
 	global $wp;
 		
 	if ( empty($url) ) {				
-
+		
+		//* Get url from options
 		$url = hmpl_ad_get_custom_field( '_genesis_canonical_uri' ) ? hmpl_ad_get_custom_field( '_genesis_canonical_uri' ) : '';
 		
-		$theme_info = wp_get_theme()->get('Template');
-		if( $theme_info == 'genesis' ) {
-			if ( empty($url) )
+		//* Genesis fallback
+		if ( empty($url) ) {
+			$theme_info = wp_get_theme()->get('Template');
+			if ( $theme_info == 'genesis' ) {
 				$url = genesis_get_custom_field( '_genesis_canonical_uri' ) ? genesis_get_custom_field( '_genesis_canonical_uri' ) : '';
+			}
 		}
 		
+		//* Generate URL
 		if ( empty ($url) ) {
-			//* Domain Mapping check
+			
+			//* Domain Mapping canonical url
 			if ( is_plugin_active( 'domain-mapping/domain-mapping.php' ) ) {
 				global $wpdb,$blog_id;
 				
+				//* Get the URL path
+				$path = $wp->request;
+				
 				//* Check if the domain is mapped
-				// Uses object cache from W3TC Auto Pilot
-				$ismapped = wp_cache_get('wap_mapped_clear_' . $blog_id, 'domain_mapping' );
-				if ( false === $ismapped ) {
-					$ismapped = $wpdb->get_var( $wpdb->prepare( "SELECT domain FROM {$wpdb->base_prefix}domain_mapping WHERE blog_id = %d", $blog_id ) ); //string
-					wp_cache_set('wap_mapped_clear_' . $blog_id, $ismapped, 'domain_mapping', 3600 ); // 1 hour
+				$mapped_domain = wp_cache_get('wap_mapped_domain_' . $blog_id, 'domain_mapping' );
+				if ( false === $mapped_domain ) {
+					$mapped_domain = $wpdb->get_var( $wpdb->prepare( "SELECT domain FROM {$wpdb->base_prefix}domain_mapping WHERE blog_id = %d", $blog_id ) ); //string
+					wp_cache_set('wap_mapped_domain_' . $blog_id, $mapped_domain, 'domain_mapping', 3600 ); // 1 hour
 				}
 				
-				if ( !empty($ismapped) ) {
-					//* Mapped domain url
-					$mappeddomainpre = wp_cache_get('hmpl_mappeddomainpre_' . $blog_id, 'hmpl_mainblog' );
-					if ( false === $mappeddomainpre ) {
-						$mappeddomainpre = $wpdb->get_var($wpdb->prepare("SELECT domain FROM {$wpdb->base_prefix}domain_mapping WHERE blog_id = %d", $blog_id));
-						wp_cache_set('hmpl_mappeddomainpre_' . $blog_id, $mappeddomainpre, 'hmpl_mainblog', 3600 ); // 1 hour
+				if ( !empty($mapped_domain) ) {
+					
+					//* Fetch scheme
+					$mappedscheme = wp_cache_get('wap_mapped_scheme_' . $blog_id, 'domain_mapping' );
+					if ( false === $mappedscheme ) {
+						$mappedscheme = $wpdb->get_var( $wpdb->prepare( "SELECT scheme FROM {$wpdb->base_prefix}domain_mapping WHERE blog_id = %d", $blog_id ) ); //bool
+						wp_cache_set('wap_mapped_scheme_' . $blog_id, $mappedscheme, 'domain_mapping', 3600 ); // 1 hour
 					}
 					
-					if ( !empty($mappeddomainpre) ) {
-						$url = add_query_arg(array(), $wp->request, $mappeddomainpre);
+					if ($mappedscheme === '1') {
+						$scheme_full = 'https://';
+						$scheme = 'https';
+					} else if ($mappedscheme === '0') {
+						$scheme_full = 'http://';
+						$scheme = 'http';
 					}
+					
+					// Put it all together
+					$url = trailingslashit( $scheme_full . $mapped_domain ) . $path;				
 				}
 			}
 			
-			if ( empty($url) )
-				$url = home_url(add_query_arg(array(),$wp->request));
+			//* Non-domainmap URL
+			if ( empty($url) ) {
+				$url = home_url(add_query_arg(array(), $path));
+				$scheme = is_ssl() ? 'https' : 'http';
+			}
 		}
 	}
-		
-	$output = '<link rel="canonical" href="' . trailingslashit( esc_url($url) ) . '" />' . "\r\n";
+	
+	$scheme = !empty($scheme) ? $scheme : '';
+	
+	$output = '<link rel="canonical" href="' . trailingslashit( esc_url( $url, $scheme ) ) . '" />' . "\r\n";
 	
 	return $output;
 }

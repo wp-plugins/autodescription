@@ -104,6 +104,10 @@ The output will be stored for each page, if you've edited a page the meta will s
 
 == Changelog ==
 
+= 2.0.4 =
+* Fixed Domain Mapping Canonical URL
+* Fixed Canonical URL scheme
+
 = 2.0.3 =
 * Applied the title output to the Title tag
 * Cleaned up code
