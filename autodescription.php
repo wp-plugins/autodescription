@@ -3,7 +3,7 @@
  * Plugin Name: AutoDescription
  * Plugin URI: https://wordpress.org/plugins/autodescription/
  * Description: Automatically adds a description if previously empty based upon content and adds Open Graph tags.
- * Version: 2.0.5
+ * Version: 2.0.6
  * Author: Sybre Waaijer
  * Author URI: https://cyberwire.nl/
  * License: GPLv2 or later
@@ -14,7 +14,6 @@
  * Fully supports Genesis themes, this plugin is build upon it.
  * Fully supports WordPress SEO (by Yoast). It pretty much disables this plugin for now, protection functions aren't really helping though.
  * Please notify me if you notice an issue with a specific theme or plugin.
- * Will test extensively in the near future.
  */
  
 /**
@@ -74,6 +73,8 @@
  *			: Added expanded filter to og:image
  *			: Removed hmpl_ad_title php warnings
  *			: Added Title seperator filter
+ *
+ * 2.0.6	: Made sure the canonical url and og:url are the same to comply with Facebook standards
  *
  * 2.1.0+	: Added global & front-page SEO settings
  *			: Give more reasons for this plugin to be standalone
@@ -768,31 +769,6 @@ function hmpl_ad_og_image($image = '', $args = array() ) {
 }
 
 /**
- * Adds og:url
- *
- * @uses wp
- *
- * @param string output	the output
- *
- * @since 1.3.0
- */
-function hmpl_ad_og_url($url = '') {
-	
-	//* if WPSEO is active
-	if ( hmpl_ad_has_og_plugin() !== false )
-		return;
-	
-	global $wp;
-	
-	if ( empty ($url) ) 
-		$url = home_url( add_query_arg( array(), $wp->request ) );
-	
-	$output = '<meta property="og:url" content="' . esc_url_raw( $url ) . '" />' . "\r\n";
-	
-	return $output;
-}
-
-/**
  * Adds og:site_name
  *
  * @uses wp
@@ -816,7 +792,7 @@ function hmpl_ad_og_sitename($sitename = '') {
 }
 
 /**
- * Adds canonical url to header
+ * Creates canonical url
  *
  * @uses WPMUdev's domain mapping
  *
@@ -824,7 +800,7 @@ function hmpl_ad_og_sitename($sitename = '') {
  *
  * @since 2.0.0
  */
-function hmpl_ad_canonical($url = '') {
+function hmpl_the_url($url = '') {
 	global $wp;
 		
 	if ( empty($url) ) {				
@@ -889,7 +865,47 @@ function hmpl_ad_canonical($url = '') {
 	
 	$scheme = !empty($scheme) ? $scheme : '';
 	
-	$output = '<link rel="canonical" href="' . trailingslashit( esc_url( $url, $scheme ) ) . '" />' . "\r\n";
+	$output = trailingslashit( esc_url( $url, $scheme ) );
+	
+	return $output;
+}
+
+/**
+ * Outputs canonical url
+ *
+ * @since 2.0.6
+ *
+ * @uses hmpl_the_url()
+ *
+ * @return string canonical url meta
+ */
+function hmpl_ad_canonical() {
+	
+	//* if WPSEO is active
+	if ( hmpl_ad_has_og_plugin() !== false )
+		return;
+	
+	$output = '<link rel="canonical" href="' . hmpl_the_url() . '" />' . "\r\n";
+	
+	return $output;
+}
+
+/**
+ * Adds og:url
+ *
+ * @return string og:url the url meta
+ *
+ * @since 1.3.0
+ * 
+ * @uses hmpl_the_url()
+ */
+function hmpl_ad_og_url() {
+	
+	//* if WPSEO is active
+	if ( hmpl_ad_has_og_plugin() !== false )
+		return;
+	
+	$output = '<meta property="og:url" content="' . hmpl_the_url() . '" />' . "\r\n";
 	
 	return $output;
 }
@@ -1082,7 +1098,7 @@ function add_hmpl_meta_tags() {
 	
 	$page_id = get_queried_object_id();
 	
-	$output = wp_cache_get( 'hmpl_autodescription_output_' . $blog_id . '_' . $page_id );
+	$output = wp_cache_get( 'hmpl_autodescription_output_' . $blog_id . '_' . $page_id, 'autodescription' );
 	if ( false === $output ) {
 		
 		$indicator = apply_filters( 'hmpl_ad_indicator', '__return_true' );
@@ -1133,7 +1149,7 @@ function add_hmpl_meta_tags() {
 		
 		$output = "\r\n" . $indicatorbefore . $robots . $before . $output . $after . $generator . $indicatorafter;
 		
-		wp_cache_set( 'hmpl_autodescription_output_' . $blog_id . '_' . $page_id, $output );
+		wp_cache_set( 'hmpl_autodescription_output_' . $blog_id . '_' . $page_id, $output, 'autodescription' );
 	}
 		
 	echo $output;
@@ -1200,8 +1216,10 @@ function hmpl_auto_description_run() {
 		 */
 		add_filter( 'woo_title', 'hmpl_ad_title', 99 );
 		
-		
-		if ( ! $logged_in ) {
+		/**
+		 * Always output on HMPL
+		 */	
+		if ( ! $logged_in || ( defined( 'IS_HMPL' ) && IS_HMPL ) ) {
 			if( $theme_info == 'genesis' ) {
 				add_action( 'genesis_meta', 'add_hmpl_meta_tags', 9 );
 			} else {

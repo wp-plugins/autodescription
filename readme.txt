@@ -104,6 +104,9 @@ The output will be stored for each page, if you've edited a page the meta will s
 
 == Changelog ==
 
+= 2.0.6 =
+* Changed og:url output to match canonical output to comply with Facebook standards
+
 = 2.0.5 =
 * Added featured image to og:image (if set)
 * Added expanded filter to og:image, read "other notes" for more information
