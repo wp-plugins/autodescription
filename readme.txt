@@ -104,6 +104,9 @@ The output will be stored for each page, if you've edited a page the meta will s
 
 == Changelog ==
 
+= 2.0.7 =
+* Removed title tag seperator when blog tagline is missing
+
 = 2.0.6 =
 * Changed og:url output to match canonical output to comply with Facebook standards
 

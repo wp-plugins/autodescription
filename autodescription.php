@@ -3,7 +3,7 @@
  * Plugin Name: AutoDescription
  * Plugin URI: https://wordpress.org/plugins/autodescription/
  * Description: Automatically adds a description if previously empty based upon content and adds Open Graph tags.
- * Version: 2.0.6
+ * Version: 2.0.7
  * Author: Sybre Waaijer
  * Author URI: https://cyberwire.nl/
  * License: GPLv2 or later
@@ -75,6 +75,8 @@
  *			: Added Title seperator filter
  *
  * 2.0.6	: Made sure the canonical url and og:url are the same to comply with Facebook standards
+ *
+ * 2.0.7	: Removed title tag seperator when blog tagline is missing
  *
  * 2.1.0+	: Added global & front-page SEO settings
  *			: Give more reasons for this plugin to be standalone
@@ -518,7 +520,7 @@ function hmpl_ad_title($title = '', $sep = '', $seplocation = 'right') {
 		if ( is_front_page() ) {
 			$tagline = get_bloginfo( 'description', 'raw');
 			
-			$title = $blogname . " $sep " . $tagline;
+			$title = ! empty( $tagline ) ? $blogname . " $sep " . $tagline : $blogname;
 		}
 		
 		if ( empty ($title) ) {
