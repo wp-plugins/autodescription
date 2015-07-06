@@ -1473,7 +1473,6 @@ function hmpl_ad_inpost_seo_box() {
 
 	<p>
 		<label for="autodescription_title"><strong><?php _e( 'Custom Document Title', 'AutoDescription' ); ?></strong> 
-			<abbr title="&lt;title&gt; Tag">[?]</abbr>
 			<a href="https://support.google.com/webmasters/answer/35624?hl=<?php echo $language; ?>#3" target="_blank" title="<?php _e( 'Recommended Length: 50 to 55 characters', 'AutoDescription' ) ?>">[?]</a>
 			<span class="hide-if-no-js"><?php printf( __( 'Characters Used: %s', 'AutoDescription' ), '<span id="autodescription_title_chars">'. mb_strlen( hmpl_ad_get_custom_field( '_genesis_title' ) ) .'</span>' ); ?></span>
 		</label>
