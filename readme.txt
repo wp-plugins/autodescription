@@ -13,87 +13,44 @@ AutoDescription makes sure your SEO is always up-to-date without any configurati
 
 = AutoDescription =
 
-This plugin makes sure your site uses Description, Open Graph, LD+JSON, robots and a Canonical tag.
+**The all in one SEO optimization plugin for WordPress**
+
+This plugin makes sure your site uses a correct Title, Description, Open Graph, LD+JSON, robots and a Canonical tag.
 
 No configuration is needed. Either Network Activate this or use it on a single site.
 
+> <strong>Written for MultiSite</strong><br>
+> This plugin has been written for WordPress Multisite with a WordPress.com like environment in mind.
+> 
+> This means that this plugin is fully compatible with the [Domain Mapping plugin by WPMUdev](https://premium.wpmudev.org/project/domain-mapping/)
+> This also means that it's completely nailed down for security and best of all: ad-free.
+> 
+> It takes a lot of time to pin down every aspect of SEO optimization so expect this plugin to be updated regularly with new features.
+
 You can also fine-tune each page's SEO, these options can be found beneath the content on the post's edit page.
-
-***How it works***
-
-**Description/og:description**
-
-1. Autodescription first looks for any Genesis SEO content.
-1. If not found, it will look through your page content.
-1. Then it will strip all shortcodes and HTML.
-1. From there it will make a sentence of maximum 160 characters and strips all words exceeding it.
-1. It will add ... if it exceeds.
-
-1. You can also add your own description on each page or post.
-2. This will override the automatically generated description.
-
-**og:image**
-
-1. AutoDescription will look for a header image if set
-
-**og:locale**
-
-1. AutoDescription will look for the current blog's language settings
-
-**og:type**
-
-1. If the page is a blog post, it will output "article"
-1. If it's an author page, it will output "profile"
-1. If it's any other page, it will output "website"
-
-**og:title**
-
-1. On the front page it will add "blogname - blog description"
-1. On any other page it will add: "page title - blogname"
-
-1. You can also add your own description on each page or post.
-2. This will override the automatically generated title.
-
-**og:url**
-
-1. The current url of the page
-
-**og:site_name**
-
-1. The blogname
-
-**LD+JSON**
-
-1. This will create a script in the header and Google will try to use this to allow users to further search in your website from their search engine.
-
-**Canonical**
-
-1. This will tell search engines where to look and continue from there. This value can be adjusted and works perfectly with [Domain Mapping by WPMUdev].
-
-[Domain Mapping by WPMUdev]: https://premium.wpmudev.org/project/domain-mapping/
-	"Get Domain Mapping"
-
-**Robots**
-
-1. Set the nofollow, noindex and noarchive tags per page or post
-1. It's up to the search engine to honor these
 
 = Caching =
 
 This plugin can be heavy on large pages (with book-like content). Therefor *a caching plugin is adviced*.
 This plugin will not output anything if no object caching plugin is found and the user is logged in.
 
-This plugin will always output the meta data when the user isn't logged in. Because Google is never logged in, your SEO is always correct.
+**This plugin will always output the meta data when the user isn't logged in. Because Google is never logged in, your SEO meta output is always displayed correctly.**
 
 **If you use object caching**
 
-The output will be stored for each page, if you've edited a page the meta will stay the same until the object cache expires. So be sure to clear your object cache if it's a drastic change.
+The output will be stored for each page, if you've edited a page the meta will stay the same until the object cache expires. So be sure to clear your object cache if your object cache expire time is set extremely high.
 
 **Other notes**
 
-*This plugin fully supports Genesis themes and WPMUdev's Domain Mapping, this plugin takes the Genesis SEO content under each post and page and the global Genesis SEO configuration page into account.*
-*This plugin will work with any theme, however it will not look through Widgets or shortcodes for description. This means that one-page themes or pages built with page builders might leave an empty description.*
-*To counter this issue, fill in the meta boxes beneath each post or page edit screen's content.*
+*This plugin copies data from the Genesis SEO meta, this means that when you use Genesis, you can easily upgrade to this plugin without editing each page!*
+
+*The Automatic Description Generation will work with any installation. But it will exclude shortcodes. This means that if you use shortcodes or a page builder, be sure to enter your custom description!*
+
+> <strong>Check out the "Other Notes" tab for advanced features</strong>
+
+= Translating =
+
+This plugin is fully translated to Dutch. If you wish to submit a translation, please contact me at [CyberWire contact](https://cyberwire.nl/contact/)
 
 == Installation ==
 
@@ -103,6 +60,12 @@ The output will be stored for each page, if you've edited a page the meta will s
 1. Let the plugin automatically work or fine-tune each page with the meta boxes beneath the content.
 
 == Changelog ==
+
+= 2.0.9 =
+* Added a custom 301 redirect URL option field on each page/post. This url accepts no query args by default, but can be activated through a filter. Read "other notes" for more information.
+* Cleaned up HTML code in Post/Page edit screen
+* Changed the explanation URL's in Post/Page edit screens so they can be easily translated (using Google Search Console help pages)
+* Updated translations for Dutch
 
 = 2.0.8 =
 * Fixed double slash in javascript file call on edit pages
@@ -190,7 +153,6 @@ The output will be stored for each page, if you've edited a page the meta will s
 
 = Add any of these filters to your theme's functions.php or a plugin to change this plugin's output: =
 
-
 ***Disable the plugin for a theme or page:***
 `add_filter('hmpl_ad_load', '__return_false');`
 
@@ -203,7 +165,7 @@ The output will be stored for each page, if you've edited a page the meta will s
 ***Disable meta boxes in post/page edit screen:***
 `add_filter( 'hmpl_ad_seobox', '__return_false' );`
 
-***Disable indicator in HTML output:***
+***Disable plugin usage indicator in HTML output:***
 `add_filter( 'hmpl_ad_indicator', '__return_false' );`
 
 ***Add custom meta before the output, example:***
@@ -275,3 +237,9 @@ function my_custom_generator() {
 	return $output;
 	
 }`
+
+***Allow only local links for custom 301 url (requires WP 4.1.0 and up for best results):***
+`add_filter('hmpl_ad_301_external', '__return_false' );`
+
+***Allow query string parameters in custom 301 redirect url:***
+`add_filter('hmpl_ad_301_noqueries', '__return_false' );`

@@ -3,7 +3,7 @@
  * Plugin Name: AutoDescription
  * Plugin URI: https://wordpress.org/plugins/autodescription/
  * Description: Automatically adds a description if previously empty based upon content and adds Open Graph tags.
- * Version: 2.0.8
+ * Version: 2.0.9
  * Author: Sybre Waaijer
  * Author URI: https://cyberwire.nl/
  * License: GPLv2 or later
@@ -79,6 +79,12 @@
  * 2.0.7	: Removed title tag seperator when blog tagline is missing
  *
  * 2.0.8	: Fixed trailing slash in javascript file call
+ *
+ * 2.0.9	: Added custom 301 redirect field
+ *			: Cleaned up HTML code
+ *			: Changed the explanation URL's on Post/Page edit screen
+ *
+ *			: I ought to remove this, it's arbitrary.
  *
  * 2.1.0+	: Added global & front-page SEO settings
  *			: Give more reasons for this plugin to be standalone
@@ -1234,6 +1240,51 @@ function hmpl_auto_description_run() {
 }
 add_action( 'init', 'hmpl_auto_description_run', 99 );
 
+/**
+ * Redirect singular page to an alternate URL.
+ *
+ * @since 2.0.9
+ */
+function hmpl_ad_custom_field_redirect() {
+	
+	$ad_wpmu_load = apply_filters( 'hmpl_ad_load', '__return_true' );
+	
+	//* Prevent redirect from options on uneditable pages or when this plugin is set to be disabled 
+	if ( ! is_singular() || ! $ad_wpmu_load )
+		return;
+	
+	if ( $url = hmpl_ad_get_custom_field( 'redirect' ) ) {
+		
+		$allow_external = apply_filters( 'hmpl_ad_301_external', '__return_true' );
+			
+		/** 
+		 * If the URL is made relative, prevent scheme issues
+		 * Always do this if IS_HMPL
+		 *
+		 * Removes http:// and https://
+		 * 
+		 * esc_url_raw uses is_ssl() to make the url good again :)
+		 *
+		 * @todo consider this to be an "always on" feature, only if link is pointing to the current domain of course.
+		 */
+		if ( ! $allow_external || ( defined( 'IS_HMPL' ) && IS_HMPL ) ) {
+			$pattern 	= 	'/'
+						.	'(((http)(s)?)\:)' 	// 1: http: https:
+						. 	'(\/\/)'			// 2: slash slash
+						.	'/s'
+						;
+			
+			$url = preg_replace( $pattern, '', $url );
+		}
+		
+		wp_redirect( esc_url_raw( $url ), 301 );
+		exit;
+
+	}
+
+}
+add_action( 'template_redirect', 'hmpl_ad_custom_field_redirect' );
+
 /* Start Meta boxes
 ----------------------------------------------------------------------------------------------------*/
 
@@ -1410,32 +1461,86 @@ function hmpl_ad_enqueue_javascript($hook) {
 function hmpl_ad_inpost_seo_box() {
 	
 	wp_nonce_field( 'hmpl_ad_inpost_seo_save', 'hmpl_ad_inpost_seo_nonce' );
-		
+	
+	//* Language shorttag to be used in Google help pages, 
+	//* e.g. en for English, nl for Dutch, fi for Finish.
+	$language = __( 'en', 'AutoDescription' );
+	
 	?>
 
-	<p><label for="autodescription_title"><b><?php _e( 'Custom Document Title', 'AutoDescription' ); ?></b> <abbr title="&lt;title&gt; Tag">[?]</abbr> <span class="hide-if-no-js"><?php printf( __( 'Characters Used: %s', 'AutoDescription' ), '<span id="autodescription_title_chars">'. mb_strlen( hmpl_ad_get_custom_field( '_genesis_title' ) ) .'</span>' ); ?></span></label></p>
-	<p><input class="large-text" type="text" name="autodescription[_genesis_title]" id="autodescription_title" value="<?php echo esc_attr( hmpl_ad_get_custom_field( '_genesis_title' ) ); ?>" /></p>
-
-	<p><label for="autodescription_description"><b><?php _e( 'Custom Post/Page Meta Description', 'AutoDescription' ); ?></b> <abbr title="&lt;meta name=&quot;description&quot; /&gt;">[?]</abbr> <span class="hide-if-no-js"><?php printf( __( 'Characters Used: %s', 'AutoDescription' ), '<span id="autodescription_description_chars">'. mb_strlen( hmpl_ad_get_custom_field( '_genesis_description' ) ) .'</span>' ); ?></span></label></p>
-	<p><textarea class="widefat" name="autodescription[_genesis_description]" id="autodescription_description" rows="4" cols="4"><?php echo esc_textarea( hmpl_ad_get_custom_field( '_genesis_description' ) ); ?></textarea></p>
-
-	<p><label for="autodescription_canonical"><b><?php _e( 'Custom Canonical URL', 'AutoDescription' ); ?></b> <a href="http://www.mattcutts.com/blog/canonical-link-tag/" target="_blank" title="&lt;link rel=&quot;canonical&quot; /&gt;">[?]</a></label></p>
-	<p><input class="large-text" type="text" name="autodescription[_genesis_canonical_uri]" id="autodescription_canonical" value="<?php echo esc_url( hmpl_ad_get_custom_field( '_genesis_canonical_uri' ) ); ?>" /></p>
-
-	<br />
-
-	<p><b><?php _e( 'Robots Meta Settings', 'AutoDescription' ); ?></b></p>
+	<p>
+		<label for="autodescription_title"><strong><?php _e( 'Custom Document Title', 'AutoDescription' ); ?></strong> 
+			<abbr title="&lt;title&gt; Tag">[?]</abbr>
+			<a href="https://support.google.com/webmasters/answer/35624?hl=<?php echo $language; ?>#3" target="_blank" title="&lt;link rel=&quot;canonical&quot; /&gt;">[?]</a>
+			<span class="hide-if-no-js"><?php printf( __( 'Characters Used: %s', 'AutoDescription' ), '<span id="autodescription_title_chars">'. mb_strlen( hmpl_ad_get_custom_field( '_genesis_title' ) ) .'</span>' ); ?></span>
+			<span><em><?php printf( __( 'Recommended Length: 50 to 55 characters' ) ) ?></em></span>
+		</label>
+	</p>
+	<p>
+		<input class="large-text" type="text" name="autodescription[_genesis_title]" id="autodescription_title" value="<?php echo esc_attr( hmpl_ad_get_custom_field( '_genesis_title' ) ); ?>" />
+	</p>
 
 	<p>
+		<label for="autodescription_description">
+			<strong><?php _e( 'Custom Post/Page Meta Description', 'AutoDescription' ); ?></strong> 
+			<abbr title="&lt;meta name=&quot;description&quot; /&gt;">[?]</abbr>
+			<a href="https://support.google.com/webmasters/answer/35624?hl=<?php echo $language; ?>#1" target="_blank" title="&lt;link rel=&quot;canonical&quot; /&gt;">[?]</a>
+			<span class="hide-if-no-js"><?php printf( __( 'Characters Used: %s', 'AutoDescription' ), '<span id="autodescription_description_chars">'. mb_strlen( hmpl_ad_get_custom_field( '_genesis_description' ) ) .'</span>' ); ?></span>
+			<span><em><?php printf( __( 'Recommended Length: 150 to 160 characters' ) ) ?></em></span>
+		</label>
+	</p>
+	<p>
+		<textarea class="widefat" name="autodescription[_genesis_description]" id="autodescription_description" rows="4" cols="4">
+			<?php echo esc_textarea( hmpl_ad_get_custom_field( '_genesis_description' ) ); ?>
+		</textarea>
+	</p>
+
+	<p>
+		<label for="autodescription_canonical">
+			<strong><?php _e( 'Custom Canonical URL', 'AutoDescription' ); ?></strong> 
+			<a href="https://support.google.com/webmasters/answer/139066?hl=<?php echo $language; ?>" target="_blank" title="&lt;link rel=&quot;canonical&quot; /&gt;">[?]</a>
+		</label>
+	</p>	
+	<p>
+		<input class="large-text" type="text" name="autodescription[_genesis_canonical_uri]" id="autodescription_canonical" value="<?php echo esc_url( hmpl_ad_get_custom_field( '_genesis_canonical_uri' ) ); ?>" />
+	</p>
+
+	<br>
+
+	<p><strong><?php _e( 'Robots Meta Settings', 'AutoDescription' ); ?></strong></p>
+	<p>
 		<label for="autodescription_noindex"><input type="checkbox" name="autodescription[_genesis_noindex]" id="autodescription_noindex" value="1" <?php checked( hmpl_ad_get_custom_field( '_genesis_noindex' ) ); ?> />
-		<?php printf( __( 'Apply %s to this post/page', 'AutoDescription' ), hmpl_ad_code( 'noindex' ) ); ?> <a href="http://yoast.com/articles/robots-meta-tags/" target="_blank">[?]</a></label><br />
+			<?php printf( __( 'Apply %s to this post/page', 'AutoDescription' ), hmpl_ad_code( 'noindex' ) ); ?> 
+			<a href="https://support.google.com/webmasters/answer/93710?hl=<?php echo $language; ?>" target="_blank" title="<?php printf( __( 'Tell Search Engines not to show this page in their search results', 'AutoDescription' ) ) ?>">[?]</a>
+		</label>
+		
+		<br>
 
 		<label for="autodescription_nofollow"><input type="checkbox" name="autodescription[_genesis_nofollow]" id="autodescription_nofollow" value="1" <?php checked( hmpl_ad_get_custom_field( '_genesis_nofollow' ) ); ?> />
-		<?php printf( __( 'Apply %s to this post/page', 'AutoDescription' ), hmpl_ad_code( 'nofollow' ) ); ?> <a href="http://yoast.com/articles/robots-meta-tags/" target="_blank">[?]</a></label><br />
+			<?php printf( __( 'Apply %s to this post/page', 'AutoDescription' ), hmpl_ad_code( 'nofollow' ) ); ?> 
+			<a href="https://support.google.com/webmasters/answer/96569?hl=<?php echo $language; ?>" target="_blank" title="<?php printf( __( 'Tell Search Engines not to follow links on this page', 'AutoDescription' ) ) ?>">[?]</a>
+		</label>
+		
+		<br>
 
 		<label for="autodescription_noarchive"><input type="checkbox" name="autodescription[_genesis_noarchive]" id="autodescription_noarchive" value="1" <?php checked( hmpl_ad_get_custom_field( '_genesis_noarchive' ) ); ?> />
-		<?php printf( __( 'Apply %s to this post/page', 'AutoDescription' ), hmpl_ad_code( 'noarchive' ) ); ?> <a href="http://yoast.com/articles/robots-meta-tags/" target="_blank">[?]</a></label>
+			<?php printf( __( 'Apply %s to this post/page', 'AutoDescription' ), hmpl_ad_code( 'noarchive' ) ); ?> 
+			<a href="https://support.google.com/webmasters/answer/79812?hl=<?php echo $language; ?>" target="_blank" title="<?php printf( __( 'Tell Search Engines not to save a cached copy this page', 'AutoDescription' ) ) ?>">[?]</a>
+		</label>
 	</p>
+	
+	<br>
+	
+	<p>
+		<label for="autodescription_redirect">
+			<strong><?php _e( 'Custom 301 Redirect URL', 'AutoDescription' ); ?></strong> 
+			<a href="https://support.google.com/webmasters/answer/93633?hl=<?php _e( 'en', 'AutoDescription' ); ?>" target="_blank" title="301 Redirect">[?]</a>
+		</label>
+	</p>
+	<p>
+		<input class="large-text" type="text" name="autodescription[redirect]" id="genesis_redirect" value="<?php echo esc_url( hmpl_ad_get_custom_field( 'redirect' ) ); ?>" />
+	</p>
+	
 	<?php
 
 }
@@ -1494,8 +1599,8 @@ function hmpl_ad_get_custom_field( $field ) {
  *
  * @uses hmpl_ad_save_custom_fields() Perform checks and saves post meta / custom field data to a post or page.
  *
- * @param integer  $post_id Post ID.
- * @param stdClass $post    Post object.
+ * @param integer  $post_id  Post ID.
+ * @param stdClass $post     Post object.
  *
  * @return mixed Returns post id if permissions incorrect, null if doing autosave, ajax or future post, false if update
  *               or delete failed, and true on success.
@@ -1510,15 +1615,140 @@ function hmpl_ad_inpost_seo_save( $post_id, $post ) {
 		'_genesis_title'         => '',
 		'_genesis_description'   => '',
 		'_genesis_canonical_uri' => '',
+		'redirect'               => '',
 		'_genesis_noindex'       => 0,
 		'_genesis_nofollow'      => 0,
 		'_genesis_noarchive'     => 0,
 	) );
 
-	//* Sanitize the title, description, and tags
 	foreach ( (array) $data as $key => $value ) {
-		if ( in_array( $key, array( '_genesis_title', '_genesis_description', '_genesis_keywords' ) ) )
+		//* Sanitize the title and description
+		if ( in_array( $key, array( '_genesis_title', '_genesis_description' ) ) ) {
 			$data[ $key ] = strip_tags( $value );
+		}
+		
+		//* Sanitize the URL. Make sure it's an absolute URL
+		if ( in_array( $key, array( 'redirect' ) ) ) {
+			$url = strip_tags($value);
+			
+			if ( !empty ($url) ) {
+				
+				$allow_external = apply_filters( 'hmpl_ad_301_external', '__return_true' );
+			
+				/** 
+				 * Sanitize the redirect URL to only a relative link and removes first slash
+				 * Always do this if IS_HMPL
+				 *
+				 * @requires WP 4.1.0 and up for best results
+				 */
+				if ( ! $allow_external || ( defined( 'IS_HMPL' ) && IS_HMPL ) )
+					$url = ltrim(wp_make_link_relative( $url ), '/');
+					
+				//* URL pattern without path
+				$pattern 	= 	'((((http)(s)?)?)\:)?' 	// 1: maybe http: https:
+							. 	'(\/\/)?'				// 2: maybe slash slash
+							. 	'((www.)?)'				// 3: maybe www.
+							.	'(.*\.[a-zA-Z0-9]*)'	// 4: any legal domain with tld
+							.	'(?:\/)'				// 5: trailing slash
+							;
+				
+				//* If link is relative, make it full again
+				if ( ! preg_match( $pattern, $url ) ) {
+										
+					//* The url is a relative path
+					$path = $url;
+					
+					$ismapped = '0';
+					
+					//* Do some extra work on domain mapping
+					if ( is_plugin_active( 'domain-mapping/domain-mapping.php' ) ) {
+						global $wpdb,$blog_id;
+						
+						//* Check if the domain is mapped
+						$mapped_domain = wp_cache_get('wap_mapped_domain_' . $blog_id, 'domain_mapping' );
+						if ( false === $mapped_domain ) {
+							$mapped_domain = $wpdb->get_var( $wpdb->prepare( "SELECT domain FROM {$wpdb->base_prefix}domain_mapping WHERE blog_id = %d", $blog_id ) ); //string
+							wp_cache_set('wap_mapped_domain_' . $blog_id, $mapped_domain, 'domain_mapping', 3600 ); // 1 hour
+						}
+						
+						if ( !empty($mapped_domain) ) {
+							
+							//* Set that the domain is mapped
+							$ismapped = '1';
+							
+							//* Fetch scheme
+							$mappedscheme = wp_cache_get('wap_mapped_scheme_' . $blog_id, 'domain_mapping' );
+							if ( false === $mappedscheme ) {
+								$mappedscheme = $wpdb->get_var( $wpdb->prepare( "SELECT scheme FROM {$wpdb->base_prefix}domain_mapping WHERE blog_id = %d", $blog_id ) ); //bool
+								wp_cache_set('wap_mapped_scheme_' . $blog_id, $mappedscheme, 'domain_mapping', 3600 ); // 1 hour
+							}
+							
+							if ($mappedscheme === '1') {
+								$scheme_full = 'https://';
+								$scheme = 'https';
+							} else if ($mappedscheme === '0') {
+								$scheme_full = 'http://';
+								$scheme = 'http';
+							}
+							
+							// Put it all together
+							$url = trailingslashit( $scheme_full . $mapped_domain ) . $path;				
+						}
+						
+					}
+					
+					//* Non-mapped URL
+					if ( $ismapped !== '1' ) {
+						$url = home_url(add_query_arg(array(), $path));
+						$scheme = is_ssl() ? 'https' : 'http';
+					}
+					
+					$scheme = !empty($scheme) ? $scheme : '';
+				
+					$url = esc_url_raw( $url, $scheme );
+				
+				}
+			}
+			
+			$noqueries = apply_filters( 'hmpl_ad_301_noqueries', '__return_true' );
+			
+			/**
+			 * Remove queries from the URL
+			 * 
+			 * Returns plain home url if $allow_external is set to false and only a query has been supplied
+			 * But that's okay. The url was rogue anyway :)
+			 */
+			if ( $noqueries ) {
+				//* Sanitize the whole thing.				
+				$pattern 	= 	'/'
+							.	'(\?|\&)' 	// 1: ? or &
+							. 	'([^=]+)'	// 2: text until =
+							.	'\='		// =
+							.	'([^&]+)'	// 3: until & if found
+							.	'/s'
+							;
+			
+				$url = preg_replace( $pattern, '', $url );
+				
+				//* Add the missing slash if destroyed
+				// @todo make this more/less specific?
+				if ( preg_match( $pattern, $url ) )
+					$url = trailingslashit($url);
+				
+				$url = esc_url( $url );
+				
+			} else {
+				//* Allow query string parameters. Warning: don't trust anyone :)
+				//* XSS safe.
+				
+				//* @todo check if esc_url in the html doesn't affect this outcome (on 2nd save?)
+				$url = esc_url_raw( $url );	
+			}
+			
+			//* Save url
+			$data[ $key ] = $url;
+			
+		}
 	}
 
 	hmpl_ad_save_custom_fields( $data, 'hmpl_ad_inpost_seo_save', 'hmpl_ad_inpost_seo_nonce', $post );
@@ -1583,3 +1813,63 @@ function hmpl_ad_save_custom_fields( array $data, $nonce_action, $nonce_name, $p
 	}
 	
 }
+
+/* Start Sitemaps
+----------------------------------------------------------------------------------------------------*/
+
+//* @todo: everything
+
+/**
+ * Edits the robots.txt output
+ *
+ * Requires not to have a robots.txt file in the root directory
+ *
+ * @uses robots_txt filter located at WP core
+ *
+ * @since 2.1.0
+ *
+ * @todo create options
+ * @todo maybe combine with noindex/noarchive/(nofollow) -> only when object caching?
+ */
+function hmpl_ad_robots_txt($output = '', $public = '') {
+	
+	$blog_id = get_current_blog_id();
+	
+	$output = wp_cache_get('msrobots_' . $blog_id, 'msrobots' );
+	if ( false === $output ) {
+		$site_url = parse_url( site_url() );
+		$path = ( !empty( $site_url['path'] ) ) ? $site_url['path'] : '';
+		
+		$output = "User-agent: *\n";
+		
+		//* If the blog isn't public, disallow root.
+		$public = get_option('blog_public');	
+		if ('0' == $public) {
+			$output .= "Disallow: /\n";
+		} else {
+			//* Output defaults
+			$output .= "Disallow: $path/wp-admin/\r\n";
+			$output .= "Disallow: $path/wp-includes/\r\n";
+			
+			//* Add our own
+			$output .= "Disallow: $path/wp-login.php\r\n";
+			$output .= "Disallow: $path/wp-activate.php\r\n";
+			
+			// Prevents query caching
+			$output .= "Disallow: $path/*?*\r\n";
+		}
+		
+		//* Add whitespace
+		$output .= "\r\n";
+		
+		//* Add sitemap full url
+		$scheme = ( !empty( $site_url['scheme'] ) ) ? $site_url['scheme'] . '://' : '';
+		$host = ( !empty( $site_url['host'] ) ) ? $site_url['host'] : '';
+		$output .= "Sitemap: $scheme$host/sitemap.xml\r\n";
+		
+		wp_cache_set('msrobots_' . $blog_id , $output, 'msrobots', 86400 ); // 24 hours
+	}
+	
+	return $output;	
+}
+//add_filter( 'robots_txt', 'hmpl_ad_robots_txt' );
