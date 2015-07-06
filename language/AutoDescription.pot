@@ -1,23 +1,108 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR Sybre Waaijer
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
+# Copyright (C) 2015 AutoDescription
+# This file is distributed under the same license as the AutoDescription package.
 msgid ""
 msgstr ""
-"Project-Id-Version: AutoDescription 1.0.0\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-03-15 13:18+0100\n"
-"PO-Revision-Date: 2015-03-15 13:19+0100\n"
-"Language: nl_NL\n"
+"Project-Id-Version: AutoDescription 2.0.9a\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/autodescription\n"
+"POT-Creation-Date: 2015-07-06 12:02:02+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2015-07-06 14:11+0100\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: CyberWire <info@hostmijnpagina.nl>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.7.5\n"
-"Last-Translator: Sybre Waaijer <info@hostmijnpagina.nl>\n"
-"Language-Team: \n"
+"Language: nl_NL\n"
+"X-Generator: Poedit 1.7.3\n"
+"X-Poedit-SourceCharset: UTF-8\n"
 
-#: autodescription.php:106
+# page title ON website title
+#: autodescription.php:402
 msgid "on"
 msgstr "op"
+
+#: autodescription.php:1428
+msgid "Post SEO Settings"
+msgstr "Bericht SEO Instellingen"
+
+#: autodescription.php:1433
+msgid "Page SEO Settings"
+msgstr "Pagina SEO Instellingen"
+
+# Google help page language URI
+#: autodescription.php:1470 autodescription.php:1538
+msgid "en"
+msgstr "nl"
+
+#: autodescription.php:1475
+msgid "Custom Document Title"
+msgstr "Aangepaste Document Titel"
+
+#: autodescription.php:1476
+msgid "Recommended Length: 50 to 55 characters"
+msgstr "Aanbevolen Lengte: 50 tot 55 tekens"
+
+#: autodescription.php:1477 autodescription.php:1489
+msgid "Characters Used: %s"
+msgstr "Gebruikte Tekens: %s"
+
+#: autodescription.php:1486
+msgid "Custom Post/Page Meta Description"
+msgstr "Aangepaste Bericht/Pagina Meta Beschrijving"
+
+#: autodescription.php:1487
+msgid "Recommended Length: 150 to 160 characters"
+msgstr "Aanbevolen Lengte: 150 tot 160 tekens"
+
+#: autodescription.php:1501
+msgid "Custom Canonical URL"
+msgstr "Aangepaste Canonieke URL"
+
+#: autodescription.php:1511
+msgid "Robots Meta Settings"
+msgstr "Robots Meta Instellingen"
+
+#: autodescription.php:1514 autodescription.php:1521 autodescription.php:1528
+msgid "Apply %s to this post/page"
+msgstr "Pas %s toe op deze bericht/pagina"
+
+#: autodescription.php:1515
+msgid "Tell Search Engines not to show this page in their search results"
+msgstr "Vertel Zoekmachines niet om deze pagina te tonen in hun zoekresultaten"
+
+#: autodescription.php:1522
+msgid "Tell Search Engines not to follow links on this page"
+msgstr "Vertel Zoekmachines om links op deze pagina niet te volgen"
+
+#: autodescription.php:1529
+msgid "Tell Search Engines not to save a cached copy this page"
+msgstr ""
+"Vertel Zoekmachines om niet een kopie in hun cache op te slaan van deze pagina"
+
+#: autodescription.php:1537
+msgid "Custom 301 Redirect URL"
+msgstr "Aangepaste 301 Omleiding URL"
+
+#. Plugin Name of the plugin/theme
+msgid "AutoDescription"
+msgstr "AutoDescription"
+
+#. Plugin URI of the plugin/theme
+msgid "https://wordpress.org/plugins/autodescription/"
+msgstr "https://wordpress.org/plugins/autodescription/"
+
+#. Description of the plugin/theme
+msgid ""
+"Automatically adds a description if previously empty based upon content and "
+"adds Open Graph tags."
+msgstr ""
+"Voeg automatisch een beschrijving toe aan jouw pagina gebaseerd op content en "
+"voegt Open Graph toe."
+
+#. Author of the plugin/theme
+msgid "Sybre Waaijer"
+msgstr "Sybre Waaijer"
+
+#. Author URI of the plugin/theme
+msgid "https://cyberwire.nl/"
+msgstr "https://cyberwire.nl/"
