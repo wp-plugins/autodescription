@@ -22,7 +22,8 @@ No configuration is needed. Either Network Activate this or use it on a single s
 > <strong>Written for MultiSite</strong><br>
 > This plugin has been written for WordPress Multisite with a WordPress.com like environment in mind.
 > 
-> This means that this plugin is fully compatible with the [Domain Mapping plugin by WPMUdev](https://premium.wpmudev.org/project/domain-mapping/)
+> This means that this plugin is fully compatible with the [Domain Mapping plugin by WPMUdev](https://premium.wpmudev.org/project/domain-mapping/).
+>
 > This also means that it's completely nailed down for security and best of all: ad-free.
 > 
 > It takes a lot of time to pin down every aspect of SEO optimization so expect this plugin to be updated regularly with new features.
@@ -50,7 +51,7 @@ The output will be stored for each page, if you've edited a page the meta will s
 
 = Translating =
 
-This plugin is fully translated to Dutch. If you wish to submit a translation, please contact me at [CyberWire contact](https://cyberwire.nl/contact/)
+This plugin is fully translated to Dutch. If you wish to submit a translation, please contact me at the [CyberWire contact page](https://cyberwire.nl/contact/).
 
 == Installation ==
 

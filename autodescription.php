@@ -3,7 +3,7 @@
  * Plugin Name: AutoDescription
  * Plugin URI: https://wordpress.org/plugins/autodescription/
  * Description: Automatically adds a description if previously empty based upon content and adds Open Graph tags.
- * Version: 2.0.9
+ * Version: 2.0.9a
  * Author: Sybre Waaijer
  * Author URI: https://cyberwire.nl/
  * License: GPLv2 or later
@@ -83,6 +83,9 @@
  * 2.0.9	: Added custom 301 redirect field
  *			: Cleaned up HTML code
  *			: Changed the explanation URL's on Post/Page edit screen
+ *
+ *
+ * 2.0.9a 	: Fixed formating in page/post seo settings
  *
  *			: I ought to remove this, it's arbitrary.
  *
@@ -1471,9 +1474,8 @@ function hmpl_ad_inpost_seo_box() {
 	<p>
 		<label for="autodescription_title"><strong><?php _e( 'Custom Document Title', 'AutoDescription' ); ?></strong> 
 			<abbr title="&lt;title&gt; Tag">[?]</abbr>
-			<a href="https://support.google.com/webmasters/answer/35624?hl=<?php echo $language; ?>#3" target="_blank" title="&lt;link rel=&quot;canonical&quot; /&gt;">[?]</a>
+			<a href="https://support.google.com/webmasters/answer/35624?hl=<?php echo $language; ?>#3" target="_blank" title="<?php _e( 'Recommended Length: 50 to 55 characters', 'AutoDescription' ) ?>">[?]</a>
 			<span class="hide-if-no-js"><?php printf( __( 'Characters Used: %s', 'AutoDescription' ), '<span id="autodescription_title_chars">'. mb_strlen( hmpl_ad_get_custom_field( '_genesis_title' ) ) .'</span>' ); ?></span>
-			<span><em><?php printf( __( 'Recommended Length: 50 to 55 characters' ) ) ?></em></span>
 		</label>
 	</p>
 	<p>
@@ -1482,11 +1484,11 @@ function hmpl_ad_inpost_seo_box() {
 
 	<p>
 		<label for="autodescription_description">
-			<strong><?php _e( 'Custom Post/Page Meta Description', 'AutoDescription' ); ?></strong> 
-			<abbr title="&lt;meta name=&quot;description&quot; /&gt;">[?]</abbr>
-			<a href="https://support.google.com/webmasters/answer/35624?hl=<?php echo $language; ?>#1" target="_blank" title="&lt;link rel=&quot;canonical&quot; /&gt;">[?]</a>
-			<span class="hide-if-no-js"><?php printf( __( 'Characters Used: %s', 'AutoDescription' ), '<span id="autodescription_description_chars">'. mb_strlen( hmpl_ad_get_custom_field( '_genesis_description' ) ) .'</span>' ); ?></span>
-			<span><em><?php printf( __( 'Recommended Length: 150 to 160 characters' ) ) ?></em></span>
+			<strong><?php _e( 'Custom Post/Page Meta Description', 'AutoDescription' ); ?></strong>
+			<a href="https://support.google.com/webmasters/answer/35624?hl=<?php echo $language; ?>#1" target="_blank" title="<?php _e( 'Recommended Length: 150 to 160 characters', 'AutoDescription' ) ?>">[?]</a>
+			<span class="hide-if-no-js">
+				<?php printf( __( 'Characters Used: %s', 'AutoDescription' ), '<span id="autodescription_description_chars">'. mb_strlen( hmpl_ad_get_custom_field( '_genesis_description' ) ) .'</span>' ); ?>
+			</span>
 		</label>
 	</p>
 	<p>
