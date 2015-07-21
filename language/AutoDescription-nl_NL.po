@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: AutoDescription\n"
-"POT-Creation-Date: 2015-07-21 15:09+0100\n"
-"PO-Revision-Date: 2015-07-21 15:14+0100\n"
+"POT-Creation-Date: 2015-07-21 15:30+0100\n"
+"PO-Revision-Date: 2015-07-21 15:31+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: nl_NL\n"
@@ -19,7 +19,7 @@ msgstr ""
 "X-Poedit-SearchPath-0: .\n"
 "X-Poedit-SearchPathExcluded-0: *.js\n"
 
-#: autodescription.php:462
+#: autodescription.php:459
 msgid "on"
 msgstr "op"
 
@@ -42,63 +42,63 @@ msgstr "Pagina"
 #: autodescription.php:1552
 #, php-format
 msgid "%s SEO Settings"
-msgstr "%s SEO instellingen"
+msgstr "%s SEO Instellingen"
 
-#: autodescription.php:1593
+#: autodescription.php:1591
 msgid "en"
 msgstr "nl"
 
-#: autodescription.php:1602
+#: autodescription.php:1600
 msgid "Custom Document Title"
 msgstr "Aangepaste Document Titel"
 
-#: autodescription.php:1603
+#: autodescription.php:1601
 msgid "Recommended Length: 50 to 55 characters"
 msgstr "Aanbevolen Lengte: 50 tot 55 tekens"
 
-#: autodescription.php:1604 autodescription.php:1615
+#: autodescription.php:1602 autodescription.php:1613
 #, php-format
 msgid "Characters Used: %s"
 msgstr "Gebruikte Tekens: %s"
 
-#: autodescription.php:1613
+#: autodescription.php:1611
 #, php-format
 msgid "Custom %s Meta Description"
 msgstr "Aangepaste %s Meta Beschrijving"
 
-#: autodescription.php:1614
+#: autodescription.php:1612
 msgid "Recommended Length: 150 to 160 characters"
 msgstr "Aanbevolen Lengte: 150 tot 160 tekens"
 
-#: autodescription.php:1624
+#: autodescription.php:1622
 msgid "Custom Canonical URL"
 msgstr "Aangepaste Canonieke URL"
 
-#: autodescription.php:1634
+#: autodescription.php:1632
 msgid "Robots Meta Settings"
 msgstr "Robots Meta Instellingen"
 
-#: autodescription.php:1637 autodescription.php:1644
-#: autodescription.php:1651
+#: autodescription.php:1635 autodescription.php:1642
+#: autodescription.php:1649
 #, php-format
 msgid "Apply %s to this %s"
 msgstr "Pas %s toe op deze %s"
 
-#: autodescription.php:1638
+#: autodescription.php:1636
 msgid "Tell Search Engines not to show this page in their search results"
 msgstr ""
 "Vertel Zoekmachines om deze pagina niet te tonen in hun zoekresultaten"
 
-#: autodescription.php:1645
+#: autodescription.php:1643
 msgid "Tell Search Engines not to follow links on this page"
 msgstr "Vertel Zoekmachines om links op deze pagina niet te volgen"
 
-#: autodescription.php:1652
+#: autodescription.php:1650
 msgid "Tell Search Engines not to save a cached copy this page"
 msgstr ""
 "Vertel Zoekmachines om niet een kopie in hun cache op te slaan van deze "
 "pagina"
 
-#: autodescription.php:1660
+#: autodescription.php:1658
 msgid "Custom 301 Redirect URL"
 msgstr "Aangepaste 301 Omleiding URL"

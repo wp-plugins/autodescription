@@ -3,7 +3,7 @@ Contributors: Cybr
 Tags: seo, description, title, og, type, meta, ogtype, multisite, search, engine, optimization, manual, canonical, rel, options, domain, mapping, genesis, robots, nofollow, noindex, noarchive, noodp, noydir
 Requires at least: 3.6.0
 Tested up to: 4.2.2
-Stable tag: 2.0.9b
+Stable tag: 2.1.0a
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -61,6 +61,9 @@ This plugin is fully translated to Dutch. If you wish to submit a translation, p
 1. Let the plugin automatically work or fine-tune each page with the meta boxes beneath the content.
 
 == Changelog ==
+
+= 2.1.0a =
+* Fixed translation
 
 = 2.1.0 =
 * Added a "redirected" post state on edit.php (all posts/all pages admin screen)

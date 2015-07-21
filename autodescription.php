@@ -3,7 +3,7 @@
  * Plugin Name: AutoDescription
  * Plugin URI: https://wordpress.org/plugins/autodescription/
  * Description: Automatically adds a description if previously empty based upon content and adds Open Graph tags.
- * Version: 2.1.0
+ * Version: 2.1.0a
  * Author: Sybre Waaijer
  * Author URI: https://cyberwire.nl/
  * License: GPLv2 or later
@@ -1547,7 +1547,7 @@ function hmpl_ad_add_inpost_seo_box() {
 	
 	//* Adds meta boxes on Posts/Pages
 	foreach ( $post_page as $type ) {
-		$post = $type == 'post' ? __( 'Post', 'autodescription' ) : __( 'Page', 'autodescription' );
+		$post = $type == 'post' ? __( 'Post', 'AutoDescription' ) : __( 'Page', 'AutoDescription' );
 		
 		add_meta_box( 'hmpl_ad_inpost_seo_box', sprintf( __( '%s SEO Settings', 'AutoDescription' ), $post ), 'hmpl_ad_inpost_seo_box', $type, 'normal', 'high', array( $post ) );
 	}
@@ -1566,11 +1566,9 @@ function hmpl_ad_add_inpost_seo_box() {
  * @used by hmpl_ad_add_inpost_seo_box
  *
  * @param $hook the current page : unused
- *
- * @todo cache busting
  */
 function hmpl_ad_enqueue_javascript( $hook ) {
-	wp_enqueue_script( 'hmpl_ad_script', plugin_dir_url( __FILE__ ) . 'js/autodescription.js', array( 'jquery' ), '', true );
+	wp_enqueue_script( 'hmpl_ad_script', plugin_dir_url( __FILE__ ) . 'js/autodescription.js', array( 'jquery' ), HMPL_AD_VERSION, true );
 }
 
 /**
