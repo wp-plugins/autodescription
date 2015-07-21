@@ -62,6 +62,14 @@ This plugin is fully translated to Dutch. If you wish to submit a translation, p
 
 == Changelog ==
 
+= 2.1.0 =
+* Added a "redirected" post state on edit.php (all posts/all pages admin screen)
+* Added a "noindex" post state on edit.php
+* Optimized code and filters
+* Added more specific post/page sentences for the meta boxes
+* Added 404 title
+* Updated translation files
+
 = 2.0.9 =
 * Added a custom 301 redirect URL option field on each page/post. This url accepts no query args by default, but can be activated through a filter. Read "other notes" for more information.
 * Cleaned up HTML code in Post/Page edit screen
@@ -244,3 +252,20 @@ function my_custom_generator() {
 
 ***Allow query string parameters in custom 301 redirect url:***
 `add_filter('hmpl_ad_301_noqueries', '__return_false' );`
+
+***Disallow the appearance of SEO states in the edit.php screen:***
+`add_filter('hmpl_ad_states', '__return_false' );`
+
+***Start over by renaming the option group: ADVANCED & untested***
+`function my_new_settings_field_group() {
+	add_filter( 'hmpl_ad_settings_field', 'my_new_settings_field_group_name' );
+}
+add_action( 'init', 'my_new_settings_field_group' );
+add_action( 'admin_init', 'my_new_settings_field_group' );
+
+function my_new_settings_field_group_name() {
+	//The new settings name, only visible in database
+	$name = 'hmpl-ad-seo-settings-new';
+	
+	return $name;
+}`
