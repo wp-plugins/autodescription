@@ -3,7 +3,7 @@
  * Plugin Name: AutoDescription
  * Plugin URI: https://wordpress.org/plugins/autodescription/
  * Description: Automatically adds a description if previously empty based upon content and adds Open Graph tags.
- * Version: 2.1.1
+ * Version: 2.1.1a
  * Author: Sybre Waaijer
  * Author URI: https://cyberwire.nl/
  * License: GPLv2 or later
@@ -823,8 +823,7 @@ function hmpl_ad_og_image($image = '', $args = array() ) {
 	}
 	
 	if ( !empty( $image ) ) {
-	//	$url = esc_url_raw( $image );
-		$url = $image;
+		$url = esc_url_raw( $image );
 	} else {
 		$url = '';
 	}
