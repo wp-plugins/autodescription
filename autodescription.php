@@ -3,7 +3,7 @@
  * Plugin Name: AutoDescription
  * Plugin URI: https://wordpress.org/plugins/autodescription/
  * Description: Automatically adds a description if previously empty based upon content and adds Open Graph tags.
- * Version: 2.1.0a
+ * Version: 2.1.1
  * Author: Sybre Waaijer
  * Author URI: https://cyberwire.nl/
  * License: GPLv2 or later
@@ -17,81 +17,7 @@
  */
  
 /**
- * Changelog
- * 1.0.0	: Initial release
- *
- * 1.0.1	: Added filter
- *
- * 1.1.0	: Added Dynamic og:type, cleaned PHP notices, plus more bugfixes
- *			: Misses language file
- *
- * 1.2.0	: Added language file again
- *			: Now uses object caching
- *			: Now displays on even if user's logged in
- *			: Added filter
- *
- * 1.3.0 	: Added SEO plugin detection
- *				: If found, disable certain outputs
- *			: Moved LD+Json script to header, replaced json_encoding with esc_url on urls
- *			: Broadened CDN support
- *			: Added GPLv2+ license in plugin header (whoops, forgot that before)
- *			: Making everything ready for filters (todo: add filters)
- *			: Broadened support for odd server configurations and older WP versions
- *			: Removed og:image if no header image is found
- *
- * 2.0.0	: This update is so big it needs a new number
- *			: Not so auto anymore
- * 				: Added meta boxes to each page and post for manual SEO
- *					: Title
- *					: Description
- *					: Canonical URL
- *					: Robots
- *			: Settings merged with Genesis SEO, after a save (per post/page) they should become AutoDescription's options.
- *			: Added canonical url tag with WPMUdev's Domain Mapping support
- *			: Added nofollow, noindex, noarchive tags per page
- *			: Added noodp and noydir on each page for better SEO consistency
- *
- * 2.0.1	: Improved performance on search and 404 pages
- *			: Renamed functions for more consistent plugin recognition
- *			: Added filters to image, generator, before output and after output of the meta
- *			: Cleaned up code
- *			: Made robots output more reliable
- *			: Fixed bug where Genesis robots was still being shown
- *			: Fixed bug where Genesis canonical was still being shown
- *
- * 2.0.2	: Fixed Javascript bug
- *
- * 2.0.3	: Added Dutch Translation
- *			: Applied the title output to the <title> tag
- *			: Cleaned up code
- *			: Various bugfixes
- *
- * 2.0.4	: Fixed Domain Mapping canonical URL
- *			: Fixed canonical URL scheme
- *
- * 2.0.5	: Added featured image to og:image before header image
- *			: Added expanded filter to og:image
- *			: Removed hmpl_ad_title php warnings
- *			: Added Title seperator filter
- *
- * 2.0.6	: Made sure the canonical url and og:url are the same to comply with Facebook standards
- *
- * 2.0.7	: Removed title tag seperator when blog tagline is missing
- *
- * 2.0.8	: Fixed trailing slash in javascript file call
- *
- * 2.0.9	: Added custom 301 redirect field
- *			: Cleaned up HTML code
- *			: Changed the explanation URL's on Post/Page edit screen
- * 2.0.9a 	: Fixed formating in page/post seo settings
- * 2.0.9b	: Fixed the whitespace tabs in page/post seo settings
- *
- * 2.1.0	: Added a "redirected" post state on edit.php (all posts/all pages admin screen)
- *			: Added a "noindex" post state on edit.php
- *			: Optimized code and filters
- *			: Added more specific post/page sentences for the meta boxes
- *			: Updated translation files
- *			: Added 404 title
+ * Dev todo
  *
  * 2.2.0+	: Added global & front-page SEO settings
  *			: Give more reasons for this plugin to be standalone
@@ -100,6 +26,19 @@
  * 3.0.0	: I'm nothing like Valve.
  * 
  * + Coming soon
+ *
+ * @todo SEO things :	article:publisher	// facebook uri -> site settings
+ *					:	fb:app_id			// facebook appid  -> site settings
+ *					:	twitter:card		// twittercard -> site settings
+ *					:	twitter:description	// Same as description 
+ *					:	twitter:title		// Custom? -> site settings
+ *					:	twitter:site		// @someone -> site settings
+ *					:	twitter:domain		// twitterdomainname -> site settings
+ *					:	twitter:image:src 	// Same as og:image
+ *					:	ld+json organisation -> site settings
+ *					:	msvalidate			// bing code -> site settings
+ *					: 	google-site-verification // google code -> site settings
+ *					: 	next/prev 			// blog navigation -> todo at theme level?
  *
  * Big thanks to StudioPress for releasing their software under GPL-2.0+, saved me a LOT of work figuring out things.
  * It also made my life easier :D Now I don't have to update my site's SEO meta (almost all my sites use Genesis)
@@ -124,7 +63,7 @@ add_action('plugins_loaded', 'ad_locale_init');
  * @since 2.0.0
  */
 function hmpl_ad_constants() {
-	define( 'HMPL_AD_SEO_SETTINGS_FIELD', apply_filters( 'hmpl_ad_settings_field', 'hmpl-ad-seo-settings' ) );
+	define( 'HMPL_AD_SEO_SETTINGS_FIELD', apply_filters( 'hmpl_ad_settings_field', 'hmpl-ad-seo-settings' ) ); // this is called wrong, should be in a function -> check genesis
 	define( 'HMPL_AD_VERSION', '2.1.0' );
 }
 add_action( 'init', 'hmpl_ad_constants');
@@ -379,7 +318,12 @@ function hmpl_get_excerpt_by_id($excerpt = '') {
  * Create description
  *
  * @since 1.0.0
- * @param output
+ * @param string description the description
+ *
+ * @todo 	Save output into the option for reduced load.
+ * 			Counter intuitive?
+ *
+ * @return string output	The description
  */
 function hmpl_ad_generate_description($description = '') {
 	global $wp_query;
@@ -732,7 +676,7 @@ function hmpl_ad_ld_json($render = '') {
  * @todo create options and upload area
  */
 function hmpl_ad_og_image($image = '', $args = array() ) {
-	global $post;
+	global $post,$blog_id;
 	
 	$post_id = $post->ID;
 		
@@ -754,7 +698,8 @@ function hmpl_ad_og_image($image = '', $args = array() ) {
 	$args = wp_parse_args( $args, $defaults );
 	
 	//* Get image from args filter
-	$image = $args['image'];	
+	if ( empty($image) )
+		$image = $args['image'];
 	
 	/**
 	 * Deprecated filter hmpl_og_image
@@ -834,13 +779,64 @@ function hmpl_ad_og_image($image = '', $args = array() ) {
 	//* Fallback: Get header image if exists
 	if ( empty ($image) )
 		$image = get_header_image();
-		
-	if ( !empty( $image ) ) {
-		$url = esc_url_raw($image);
-		$output = '<meta property="og:image" content="' . $url . '" />' . "\r\n";
-		
-		return $output;
+
+	//* If there still is no image, get the "site avatar" from WPMUdev Avatars
+	if ( empty ($image) ) {
+		if ( is_plugin_active( 'avatars/avatars.php' ) ) {
+			global $ms_avatar,$current_site;
+			
+			$size = '256';
+			
+			$file = $ms_avatar->blog_avatar_dir . $ms_avatar->encode_avatar_folder( $blog_id ) . '/blog-' . $blog_id . '-' . $size . '.png';
+			
+			if ( is_file( $file ) ) {
+				$upload_dir = wp_upload_dir();
+				$upload_url = $upload_dir['baseurl'];
+				$debug = '0';
+				
+				// Isn't there a more elegant core option? =/
+				// I'm basically backwards enginering the wp_upload_dir
+				// function to get the base url without /sites/blogid or /blogid.
+				if ( is_multisite() && ! ( is_main_network() && is_main_site() && defined( 'MULTISITE' ) ) ) {
+					if ( ! get_site_option( 'ms_files_rewriting' ) ) {
+						if ( defined( 'MULTISITE' ) ) {
+							$upload_url = str_replace( '/sites/' . $blog_id, '', $upload_url );
+							$debug = '1';
+						} else {
+							$upload_url = str_replace( '/' . $blog_id, '', $upload_url );
+							$debug = '2';
+						}
+					} elseif ( defined( 'UPLOADS' ) && ! ms_is_switched() ) {
+						// I'm not sure what to do here so I'm just gonna fall back to default
+						// I'll wait for a bug report (most unlikely)
+						$upload_url = $upload_url;
+						$debug = '3';
+					}
+				}
+					
+				$avatars_url = trailingslashit( trailingslashit($upload_url) . basename(dirname($ms_avatar->blog_avatar_dir)) );
+			//	$path = preg_replace( '/' . preg_quote( dirname($ms_avatar->blog_avatar_dir) . '/', '/') . '/', $avatars_url, $file ) . ' debug: ' . $debug . ' url: ' . $upload_url;
+				$path = preg_replace( '/' . preg_quote( dirname($ms_avatar->blog_avatar_dir) . '/', '/') . '/', $avatars_url, $file );
+			}
+			$image = !empty( $path ) ? $path : '';
+		}
 	}
+	
+	if ( !empty( $image ) ) {
+	//	$url = esc_url_raw( $image );
+		$url = $image;
+	} else {
+		$url = '';
+	}
+	
+	/**
+	 * Always output
+	 *
+	 * @since 2.1.1
+	 */
+	$output = '<meta property="og:image" content="' . $url . '" />' . "\r\n";
+		
+	return $output;
 }
 
 /**
@@ -1218,6 +1214,7 @@ function add_hmpl_meta_tags() {
 		$after = apply_filters( 'hmpl_ad_pro', $after = '' );
 		
 		//* This should get its own function?
+		// @todo create generator function
 		$generator = apply_filters( 'hmpl_ad_generator', $generator = '' );
 		
 		if ( !empty($generator) )
@@ -1295,9 +1292,9 @@ function hmpl_auto_description_run() {
 			$genesis = hmpl_ad_is_genesis();
 			
 			if( $genesis ) {
-				add_action( 'genesis_meta', 'add_hmpl_meta_tags', 9 );
+				add_action( 'genesis_meta', 'add_hmpl_meta_tags', 5 );
 			} else {
-				add_action( 'wp_head', 'add_hmpl_meta_tags', 9 );
+				add_action( 'wp_head', 'add_hmpl_meta_tags', 5 );
 			}
 		}
 	}
@@ -1436,7 +1433,7 @@ add_action( 'after_setup_theme', 'hmpl_auto_description_admin_run', 10);
 /**
  * Return SEO options from the SEO options database.
  *
- * @since 2.0.0+
+ * @since todo 2.1.0+
  *
  * @uses hmpl_ad_get_option() Return option from the options table and cache result.
  * @uses HMPL_AD_SEO_SETTINGS_FIELD

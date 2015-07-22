@@ -3,7 +3,7 @@ Contributors: Cybr
 Tags: seo, description, title, og, type, meta, ogtype, multisite, search, engine, optimization, manual, canonical, rel, options, domain, mapping, genesis, robots, nofollow, noindex, noarchive, noodp, noydir
 Requires at least: 3.6.0
 Tested up to: 4.2.2
-Stable tag: 2.1.0a
+Stable tag: 2.1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,7 +15,9 @@ AutoDescription makes sure your SEO is always up-to-date without any configurati
 
 **The all in one SEO optimization plugin for WordPress**
 
-This plugin makes sure your site uses a correct Title, Description, Open Graph, LD+JSON, robots and a Canonical tag.
+This plugin makes sure your site uses a correct Title, Description, Open Graph, LD+JSON, Robots and a Canonical tag.
+
+This plugin also allows you to edit the Title, Description, Open Graph, Robots, Canonical Tag and a 301 Redirect for each post or page in a compact settings box.
 
 No configuration is needed. Either Network Activate this or use it on a single site.
 
@@ -41,7 +43,7 @@ This plugin will not output anything if no object caching plugin is found and th
 
 The output will be stored for each page, if you've edited a page the meta will stay the same until the object cache expires. So be sure to clear your object cache if your object cache expire time is set extremely high.
 
-**Other notes**
+= Other notes =
 
 *This plugin copies data from the Genesis SEO meta, this means that when you use Genesis, you can easily upgrade to this plugin without editing each page!*
 
@@ -61,6 +63,12 @@ This plugin is fully translated to Dutch. If you wish to submit a translation, p
 1. Let the plugin automatically work or fine-tune each page with the meta boxes beneath the content.
 
 == Changelog ==
+
+= 2.1.1 =
+* Pushed the meta tags higher up in the wp_head
+* Added WPMUdev's Avatars 'blog avatar' og:image support
+* Forced og:image to always output even if the URL is empty for better syntax.
+* Other minor improvements
 
 = 2.1.0a =
 * Fixed translation
