@@ -3,7 +3,7 @@ Contributors: Cybr
 Tags: seo, description, title, og, type, meta, ogtype, multisite, search, engine, optimization, manual, canonical, rel, options, domain, mapping, genesis, robots, nofollow, noindex, noarchive, noodp, noydir
 Requires at least: 3.6.0
 Tested up to: 4.2.2
-Stable tag: 2.1.1a
+Stable tag: 2.1.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -63,6 +63,10 @@ This plugin is fully translated to Dutch. If you wish to submit a translation, p
 1. Let the plugin automatically work or fine-tune each page with the meta boxes beneath the content.
 
 == Changelog ==
+
+= 2.1.2 =
+* Changed the SEO metabox ID
+* Set the SEO metabox to be closed by default for a cleaner look.
 
 = 2.1.1a =
 * Escaped output URL in og:image left out in 2.1.1

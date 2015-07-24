@@ -3,7 +3,7 @@
  * Plugin Name: AutoDescription
  * Plugin URI: https://wordpress.org/plugins/autodescription/
  * Description: Automatically adds a description if previously empty based upon content and adds Open Graph tags.
- * Version: 2.1.1a
+ * Version: 2.1.2
  * Author: Sybre Waaijer
  * Author URI: https://cyberwire.nl/
  * License: GPLv2 or later
@@ -1544,14 +1544,35 @@ function hmpl_ad_add_inpost_seo_box() {
 	//* Adds meta boxes on Posts/Pages
 	foreach ( $post_page as $type ) {
 		$post = $type == 'post' ? __( 'Post', 'AutoDescription' ) : __( 'Page', 'AutoDescription' );
+		$id = 'autodescription-seo-box';
 		
-		add_meta_box( 'hmpl_ad_inpost_seo_box', sprintf( __( '%s SEO Settings', 'AutoDescription' ), $post ), 'hmpl_ad_inpost_seo_box', $type, 'normal', 'high', array( $post ) );
+		add_meta_box( $id, sprintf( __( '%s SEO Settings', 'AutoDescription' ), $post ), 'hmpl_ad_inpost_seo_box', $type, 'normal', 'high', array( $post ) );
+		
+		add_filter( 'default_hidden_meta_boxes', 'hmpl_ad_close_the_box', 10, 2 );
+		//add_filter( "postbox_classes_{$type}_{$id}", 'hmpl_ad_close_the_box' );
 	}
 	
 	//* Add javascript file
 	if ( $post_page[0] )
 		add_action( 'admin_enqueue_scripts', 'hmpl_ad_enqueue_javascript', 11 );
 
+}
+
+/**
+ * Adds closed class to the meta box to give the post edit page a cleaner look. Only applies on new sites.
+ * 
+ * @param array $hidden list of metaboxes to hide
+ * @paran array $screen unused since the filter is loaded on the correct page
+ * 
+ * @since 2.1.2
+ */
+function hmpl_ad_close_the_box( $hidden, $screen ) {
+		
+	$hidden = array(
+			'autodescription-seo-box',
+			);
+			
+    return $hidden;
 }
 
 /**
