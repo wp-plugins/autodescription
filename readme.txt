@@ -2,8 +2,8 @@
 Contributors: Cybr
 Tags: seo, description, title, og, type, meta, ogtype, multisite, search, engine, optimization, manual, canonical, rel, options, domain, mapping, genesis, robots, nofollow, noindex, noarchive, noodp, noydir
 Requires at least: 3.6.0
-Tested up to: 4.2.2
-Stable tag: 2.1.3
+Tested up to: 4.2.3
+Stable tag: 2.1.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -63,6 +63,9 @@ This plugin is fully translated to Dutch. If you wish to submit a translation, p
 1. Let the plugin automatically work or fine-tune each page with the meta boxes beneath the content.
 
 == Changelog ==
+
+= 2.1.4 =
+* Added search title
 
 = 2.1.3 =
 * Fixed fatal error caused by undefined function caused in some server configurations

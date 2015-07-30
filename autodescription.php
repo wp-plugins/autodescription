@@ -19,6 +19,8 @@
 /**
  * Dev todo
  *
+ * 2.1.4 	: Added search title
+ * 
  * 2.2.0+	: Added global & front-page SEO settings
  *			: Give more reasons for this plugin to be standalone
  *			: Sitemaps! // Delaying this because there are so many good options out there already.
@@ -562,9 +564,12 @@ function hmpl_ad_title($title = '', $sep = '', $seplocation = 'right') {
 		}
 		
 		if ( is_404() ) {
-			$title 		= '404' . " $sep " . $blogname;
+			$title = '404' . " $sep " . $blogname;
 		}
 		
+		if ( is_search() ) {
+			$title = __( 'Search results for:', 'autodescription' ) . " " . get_search_query() . " $sep " . $blogname; 
+		}
 	}
 	
 	$title = esc_html( trim( $title ) );
