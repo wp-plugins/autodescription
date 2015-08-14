@@ -35,7 +35,6 @@ You can also fine-tune each page's SEO, these options can be found beneath the c
 = Caching =
 
 This plugin can be heavy on large pages (with book-like content). Therefor *a caching plugin is adviced*.
-This plugin will not output anything if no object caching plugin is found and the user is logged in.
 
 **This plugin will always output the meta data when the user isn't logged in. Because Google is never logged in, your SEO meta output is always displayed correctly.**
 
