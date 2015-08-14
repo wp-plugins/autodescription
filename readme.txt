@@ -2,8 +2,8 @@
 Contributors: Cybr
 Tags: seo, description, title, og, type, meta, ogtype, multisite, search, engine, optimization, manual, canonical, rel, options, domain, mapping, genesis, robots, nofollow, noindex, noarchive, noodp, noydir
 Requires at least: 3.6.0
-Tested up to: 4.2.3
-Stable tag: 2.1.4
+Tested up to: 4.3.0
+Stable tag: 2.1.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,11 +23,11 @@ No configuration is needed. Either Network Activate this or use it on a single s
 
 > <strong>Written for MultiSite</strong><br>
 > This plugin has been written for WordPress Multisite with a WordPress.com like environment in mind.
-> 
+>
 > This means that this plugin is fully compatible with the [Domain Mapping plugin by WPMUdev](https://premium.wpmudev.org/project/domain-mapping/).
 >
 > This also means that it's completely nailed down for security and best of all: ad-free.
-> 
+>
 > It takes a lot of time to pin down every aspect of SEO optimization so expect this plugin to be updated regularly with new features.
 
 You can also fine-tune each page's SEO, these options can be found beneath the content on the post's edit page.
@@ -59,10 +59,15 @@ This plugin is fully translated to Dutch. If you wish to submit a translation, p
 
 1. Install AutoDescription either via the WordPress.org plugin directory, or by uploading the files to your server.
 1. Either Network Activate this plugin or activate it on a single site.
-1. That's it! 
+1. That's it!
 1. Let the plugin automatically work or fine-tune each page with the meta boxes beneath the content.
 
 == Changelog ==
+
+= 2.1.5 =
+* Removed: Object Cache bias
+* Deprecated: hmpl_ad_load_logged_out_only filter
+* Compatibility: PHP7 and WP 4.3 verified
 
 = 2.1.4 =
 * Added search title
@@ -176,7 +181,7 @@ This plugin is fully translated to Dutch. If you wish to submit a translation, p
 * Cleaned up PHP notices
 * Bugfixes
 
-= 1.0.1 = 
+= 1.0.1 =
 * Added filter hmpl_ad_load (return false to disable the plugin output)
 
 = 1.0.0 =
@@ -189,7 +194,7 @@ This plugin is fully translated to Dutch. If you wish to submit a translation, p
 ***Disable the plugin for a theme or page:***
 `add_filter('hmpl_ad_load', '__return_false');`
 
-***Only allow this plugin to output if the user isn't logged in:***
+***Only allow this plugin to output if the user isn't logged in: (deprecated)***
 `add_filter('hmpl_ad_load_logged_out_only', '__return_true');`
 
 ***Always output meta data, regardless of caching of user log in:***
@@ -204,18 +209,18 @@ This plugin is fully translated to Dutch. If you wish to submit a translation, p
 ***Add custom meta before the output, example:***
 `add_filter('hmpl_ad_pre', 'my_before_autodescription' );
 function my_before_autodescription() {
-	
+
 	//* Add prefetching
 	$prefetch 	= 	'<link rel="dns-prefetch" href="//fonts.googleapis.com/">' . "\r\n"
 				.	'<link rel="dns-prefetch" href="//fonts.gstatic.com/">' . "\r\n"
 				;
-	
+
 	//* Add mobile scaling viewport
 	$viewport 	= '<meta name="viewport" content="initial-scale=1.0,width=device-width,user-scalable=no" />' . "\r\n";
-	
+
 	//* Add the two together in another variable
 	$output = $prefetch . $viewport;
-	
+
 	//* Return the output
 	return $output;
 }`
@@ -223,14 +228,14 @@ function my_before_autodescription() {
 ***Add custom meta after the output, example:***
 `add_filter('hmpl_ad_pro', 'my_after_autodescription' );
 function my_after_autodescription() {
-	
+
 	//* Add your app icons for apple and Windows (Phone) 8, don't forget to escape the urls!
 	$appicons 	= '<link rel="icon" type="image/x-icon" href="' .  esc_url(home_url( '/path/to/favicon.ico' ) ) . '" sizes="16x16">' . "\r\n"
 				. '<link rel="apple-touch-icon-precomposed" href="' .  esc_url(home_url( '/path/to/yourimage152px.png' ) ) . '" />' . "\r\n"
 				. '<meta name="msapplication-TileImage" content="' .  esc_url(home_url( '/path/to/yourimage144px.png' ) ) .'" />' . "\r\n"
 				. '<meta name="msapplication-TileColor" content="#f1f1f1" />' . "\r\n"
 				;
-	
+
 	return $appicons;
 }`
 
@@ -240,8 +245,8 @@ function my_og_image() {
 
 	//* You don't have to escape this url :)
 	$output = home_url( '/path/to/yourimage200px.jpg' );
-	
-	return $output;	
+
+	return $output;
 }`
 
 ***Add custom og image arguments, example:***
@@ -250,25 +255,25 @@ function my_awesome_og_image() {
 
 	//* You don't have to escape this url :)
 	$args['image'] = home_url( '/path/to/yourimage200_to_1500px.jpg' );
-	
+
 	//* Set this to true if you don't want featured images to be used in og:image
 	//* args['image'] has to be set for this to work
 	$args['override'] = false;
-	
+
 	//* Set this to false if you wish that the homepage featured image overrides the URL set above
 	$args['frontpage'] = true;
-	
-	return $args;	
+
+	return $args;
 }`
 
 ***Add custom generator tag, example:***
 `add_filter('hmpl_ad_generator', 'my_custom_generator' );
 function my_custom_generator() {
-	
+
 	$output = 'MyAwesomeCompany';
-	
+
 	return $output;
-	
+
 }`
 
 ***Allow only local links for custom 301 url (requires WP 4.1.0 and up for best results):***
@@ -290,6 +295,6 @@ add_action( 'admin_init', 'my_new_settings_field_group' );
 function my_new_settings_field_group_name() {
 	//The new settings name, only visible in database
 	$name = 'hmpl-ad-seo-settings-new';
-	
+
 	return $name;
 }`
